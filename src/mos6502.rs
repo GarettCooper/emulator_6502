@@ -15,15 +15,17 @@ pub struct MOS6502{
     stack_pointer: u8,
     status_register: u8,
     //Callbacks
-    write: fn(u16, u8),
     read: fn(u16) -> u8,
+    write: fn(u16, u8),
     //Other
     ///The number of cycles before the next opcode is run
     remaining_cycles: u8
 }
 
-impl Default for MOS6502{
-    fn default() -> Self {
+impl MOS6502{
+
+    ///Creates a new MOS6502 emulation
+    pub fn new(read_fn: fn(u16) -> u8, write_fn: fn(u16, u8)) -> MOS6502{
         MOS6502{
             accumulator: 0x00,
             x_register: 0x00,
@@ -31,19 +33,10 @@ impl Default for MOS6502{
             program_counter: 0x0000,
             stack_pointer: 0xFD,
             status_register: 0x34,
-            write: |address, data | {println!("Write callback not set!")},
-            read: |data| {println!("Read callback not set!"); return Default::default()},
+            read: read_fn,
+            write: write_fn,
             remaining_cycles: 0
         }
-    }
-}
-
-
-impl MOS6502{
-
-    ///Creates a new MOS6502 emulation
-    pub fn new() -> MOS6502{
-        Default::default()
     }
 
     ///Sets the function that will be called when the processor writes to an address

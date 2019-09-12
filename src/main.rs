@@ -4,11 +4,7 @@ use mos6502::MOS6502;
 
 //TODO: Refactor this into a library
 fn main() {
-    let mut test: MOS6502 = Default::default();
-    test.reset();
-    //test.test();
-    test.set_read_callback(read);
-    test.set_write_callback(write);
+    let mut test: MOS6502 = MOS6502::new(read, write);
 }
 
 fn write(address: u16, data: u8){
