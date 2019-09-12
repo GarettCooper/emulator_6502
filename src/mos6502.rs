@@ -146,7 +146,8 @@ impl MOS6502{
 
     ///Accumulator: Address mode which operates on the value in the accumulator instead of at a memory address
     ///This is only here for completeness, it should never be called
-    // TODO: Investigate alternative solutions to use something better than a stub method as a sentinel value
+    // DO NOT USE THIS MODE, instead use multiple implementations of opcode
+    // TODO: Investigate a better solution
     fn acc(this: &mut Self) -> (u16, u8){
         //Return default values that should never be used
         panic!("Accumulator Address mode was called");
@@ -236,14 +237,15 @@ impl MOS6502{
     }
 
     //OPCODES---------------------------------------------------------------------------------------
+    //  An opcode function represents one of the 6502's opcodes. An opcode function is passed the
+    //  address mode to use and returns the number of extra cycles that address mode has taken
 
-    ///Adds a value and the carry bit to the accumulator, returns the number of additional cycles
-    /// the operation will take
+    ///ADC: Adds a value and the carry bit to the accumulator, returns the number of additional cycles
+    ///     the operation will take
     fn adc(this: &mut Self, address_mode: AddressMode) -> u8{
 
-        let (value, additional_cycles) = address_mode(this);
-        //Since the value is an address, only take last 8 bits
-        let value = value as u8;
+        let (address, additional_cycles) = address_mode(this);
+        let value = this.read(address);
 
         let result: u16;
 
@@ -278,9 +280,77 @@ impl MOS6502{
 
         return additional_cycles;
     }
+
+    ///AND: Performs a logical and with the accumulator and the addressed value, storing the result
+    ///     in the accumulator
+    fn and(this: &mut Self, address_mode: AddressMode) -> u8{
+        let (address, additional_cycles) = address_mode(this);
+        let value = this.read(address);
+
+        this.accumulator &= value;
+
+        this.set_flag(StatusFlag::Zero, this.accumulator == 0);
+
+        //Negative flag is in bit 7, so it can be used to test if the result is negative, because a negative value will also have a 1 in bit 7
+        this.set_flag(StatusFlag::Negative, this.accumulator & StatusFlag::Negative as u8 > 0);
+
+        return additional_cycles;
+    }
+
+    ///ASL: Performs a left bit shift on the addressed value
+    fn asl(this: &mut Self, address_mode: AddressMode) -> u8{
+        let (address, additional_cycles) = address_mode(this);
+        let mut value = this.read(address);
+
+        //Store the 7th bit in the carry bit
+        this.set_flag(StatusFlag::Carry, value >> 7 == 1);
+        value <<= 1;
+        this.write(address, value);
+
+        return additional_cycles; //Should always be 0
+    }
+
+    ///ASL A: Performs a left bit shift on the accumulator
+    fn asl_a(this: &mut Self, address_mode: AddressMode) -> u8{
+        let mut value = this.accumulator;
+
+        //Store the 7th bit in the carry bit
+        this.set_flag(StatusFlag::Carry, value >> 7 == 1);
+        value <<= 1;
+        this.accumulator = value;
+
+        return 0; //Should always be 0
+    }
+
+    ///BCC: Branch if the carry bit is clear
+    fn bcc(this: &mut Self, address_mode: AddressMode) -> u8{
+        let (relative_address, additional_cycles) = address_mode(this);
+        let address = signed_8_bit_to_16(this.read(relative_address)) + this.program_counter;
+        let mut extra_cycles = 0;
+
+        if !this.get_flag(StatusFlag::Carry){
+            if address & 0xff00 != this.program_counter & 0xff00{
+                extra_cycles += 2;
+            } else {
+                extra_cycles += 1;
+            }
+
+            this.program_counter = address;
+        }
+
+        return extra_cycles;
+    }
 }
 
 //HELPERS------------------------------------------------------------------------------------------
+
+fn signed_8_bit_to_16(value: u8) -> u16{
+    let mut value = value as u16;
+    if value & 0x80 > 0{
+        value |= 0xff00;
+    }
+    return value;
+}
 
 #[cfg(not(nes))] //These are unneeded in nes mode
 fn decimal_add(x: u8, y:u8) -> u8{
