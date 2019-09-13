@@ -3,8 +3,8 @@ mod opcodes;
 use std::u8;
 
 //Declare some type alias for clarity's sake
-pub (crate) type AddressMode = fn(&mut MOS6502) -> (u16,u8);
-pub (crate) type OpCode = fn(&mut MOS6502, AddressMode) -> u8;
+pub (crate) type AddressModeFunction = fn(&mut MOS6502) -> (u16, u8);
+pub (crate) type OpcodeFunction = fn(&mut MOS6502, AddressModeFunction) -> u8;
 
 
 #[derive(Debug)]
@@ -232,38 +232,11 @@ impl MOS6502{
     }
 }
 
-//HELPERS------------------------------------------------------------------------------------------
-
-fn signed_8_bit_to_16(value: u8) -> u16{
-    let mut value = value as u16;
-    if value & 0x80 > 0{
-        value |= 0xff00;
-    }
-    return value;
-}
-
-#[cfg(not(nes))] //These are unneeded in nes mode
-fn decimal_add(x: u8, y:u8) -> u8{
-    let mut sum = x.wrapping_add(y);
-    if (x & 0x0f) + (y & 0x0f) > 0x09{
-        sum = sum.wrapping_add(0x06);
-    }
-    if (sum & 0xf0) > 0x90{
-        sum = sum.wrapping_add(0x60);
-    }
-    return sum
-}
-
-#[cfg(not(nes))] //These are unneeded in nes mode
-fn decimal_subtract(x: u8, y: u8) -> u8{
-    let mut diff = x.wrapping_sub(y);
-    if (x & 0x0f) < (y & 0x0f){
-        diff = diff.wrapping_sub(0x06);
-    }
-    if (x & 0xf0) < (y & 0xf0){
-        diff = diff.wrapping_sub(0x60);
-    }
-    return diff
+pub (crate) enum AddressModeValue {
+    Implied,
+    Accumulator,
+    RelativeAddress(u8),
+    AbsoluteAddress(u16)
 }
 
 #[derive(Copy, Clone)]

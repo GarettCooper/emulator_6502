@@ -5,17 +5,33 @@
 
 use super::MOS6502;
 use super::StatusFlag;
-use super::AddressMode;
+use super::AddressModeFunction;
+use super::OpcodeFunction;
+use super::AddressModeValue;
+
+pub (crate) struct Opcode{
+    function: OpcodeFunction,
+    address_mode: AddressModeFunction,
+    cycles: u8
+}
+
+//static OPCODE_TABLE: [Opcode; 256] = [
+    //TODO: Create static opcode table
+    //Opcode{ function: brk, address_mode: imp, cycles: 7 } //0x00
+//];
 
 
-//TODO: Create static opcode table
 
-///ADC: Adds a value and the carry bit to the accumulator, returns the number of additional cycles
-///     the operation will take
-fn adc(cpu: &mut MOS6502, address_mode: AddressMode) -> u8{
+///ADC: Adds a value and the carry bit to the accumulator
+fn adc(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 
-    let (address, additional_cycles) = address_mode(cpu);
-    let value = cpu.read(address);
+    let value;
+
+    if let AddressModeValue::AbsoluteAddress(address) = address_mode_value{
+        value = cpu.read(address)
+    } else {
+        panic!("ADC opcode called with invalid address mode!")
+    }
 
     let result: u16;
 
@@ -48,12 +64,12 @@ fn adc(cpu: &mut MOS6502, address_mode: AddressMode) -> u8{
 
     cpu.accumulator = result as u8;
 
-    return additional_cycles;
+    return 0; //Operation never adds any extra cycles
 }
 
 ///AND: Performs a logical and with the accumulator and the addressed value, storing the result
 ///     in the accumulator
-fn and(cpu: &mut MOS6502, address_mode: AddressMode) -> u8{
+fn and(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
     let (address, additional_cycles) = address_mode(cpu);
     let value = cpu.read(address);
 
@@ -68,7 +84,7 @@ fn and(cpu: &mut MOS6502, address_mode: AddressMode) -> u8{
 }
 
 ///ASL: Performs a left bit shift on the addressed value
-fn asl(cpu: &mut MOS6502, address_mode: AddressMode) -> u8{
+fn asl(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
     let (address, additional_cycles) = address_mode(cpu);
     let mut value = cpu.read(address);
 
@@ -81,7 +97,7 @@ fn asl(cpu: &mut MOS6502, address_mode: AddressMode) -> u8{
 }
 
 ///ASL A: Performs a left bit shift on the accumulator
-fn asl_a(cpu: &mut MOS6502, address_mode: AddressMode) -> u8{
+fn asl_a(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
     let mut value = cpu.accumulator;
 
     //Store the 7th bit in the carry bit
@@ -93,18 +109,258 @@ fn asl_a(cpu: &mut MOS6502, address_mode: AddressMode) -> u8{
 }
 
 ///BCC: Branch if the carry bit is clear
-fn bcc(cpu: &mut MOS6502, address_mode: AddressMode) -> u8{
+fn bcc(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
     return branch(cpu, cpu.get_flag(StatusFlag::Carry), address_mode)
 }
 
 ///BCC: Branch if the carry bit is set
-fn bcs(cpu: &mut MOS6502, address_mode: AddressMode) -> u8{
+fn bcs(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
     return branch(cpu, cpu.get_flag(StatusFlag::Carry), address_mode)
 }
 
-///BEQ: Branch if the zero bit is set
-fn beq(cpu: &mut MOS6502, address_mode: AddressMode) -> u8{
+///BEQ: Branch if the zero bit is set (branch if equal)
+fn beq(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
     return branch(cpu, cpu.get_flag(StatusFlag::Zero), address_mode)
+}
+
+///BIT: Uses the accumulator as a mask pattern to test the bits of a given memory location
+fn bit(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///BMI: Branch if the negative bit is set (branch if negative)
+fn bmi(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///BNE: Branch if the zero bit is clear (branch if not equal)
+fn bne(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///BPL: Branch if the negative bit is clear (branch if positive)
+fn bpl(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///BRK: Force an interrupt
+fn brk(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///BVC: Branch if the overflow bit is clear
+fn bvc(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///BVS: Branch if the overflow bit is set
+fn bvs(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///CLC: Clear carry bit
+fn clc(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///CLD: Clear decimal mode bit
+fn cld(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///CLD: Clear interrupt disable bit
+fn cli(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///CLD: Clear overflow bit
+fn clv(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///CMP: Compare accumulator to a value in memory
+fn cmp(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///CPX: Compare x register to a value in memory
+fn cpx(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///CPY: Compare y register to a value in memory
+fn cpy(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///DEC: Subtract one from the value at the given memory location
+fn dec(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///DEC: Subtract one from the x register
+fn dex(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///DEY: Subtract one from the y register
+fn dey(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///EOR: Set accumulator to the result of an exclusive or operation with the accumulator and a value from memory
+fn eor(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///INC: Add one to the value at the given memory location
+fn inc(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///INX: Add one to the x register
+fn inx(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///DEC: Add one to the y register
+fn iny(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///JMP: Set the program counter to the given address
+fn jmp(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///JSR: Puts the current program counter value on the stack and then jumps to the given address
+fn jsr(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///LDA: Load a value into the accumulator from a memory address
+fn lda(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///LDX: Load a value into the x register from a memory address
+fn ldx(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///LDY: Load a value into the y register from a memory address
+fn ldy(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///LSR: Performs a right bit shift on the given value
+fn lsr(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///NOP: No operation
+fn nop(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///ORA: The accumulator is set to the result of a inclusive or operation applied to the accumulator and a memory value
+fn ora(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///PHA: Push the value of the accumulator onto the stack
+fn pha(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///PHP: Push the value of the status byte onto the stack
+fn php(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///PLA: Sets the accumulator to a value popped off the top of the stack
+fn pla(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///PLP: Sets the status byte to a value popped off the top of the stack
+fn plp(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///ROL: Rotate the bits of the given value to the left
+fn rol(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///ROR: Rotate the bits of the given value to the right
+fn ror(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///RTI: Returns from an interrupt, reversing the operations performed by the BRK instruction
+fn rti(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///RTS: Returns from a subroutine, taking the value of the program counter from the stack
+fn rts(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///SBC: Subtracts a value and the opposite of the carry bit from the accumulator
+fn sbc(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///SEC: Sets the carry bit to one
+fn sec(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///SED: Sets the decimal bit to one
+fn sed(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///SEI: Sets the interrupt disable bit to one
+fn sei(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///STA: Store the accumulator in the given memory address
+fn sta(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///STX: Store the x register in the given memory address
+fn stx(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///STY: Store the y register in the given memory address
+fn sty(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///TAX: Transfer the accumulator into the x register
+fn tax(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///TAY: Transfer the accumulator into the y register
+fn tay(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///TXS: Transfer the x register into the stack pointer
+fn txs(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
+}
+
+///TYA: Transfer the y register into the accumulator
+fn tya(cpu: &mut MOS6502, address_mode: AddressModeFunction) -> u8{
+    unimplemented!()
 }
 
 //HELPERS------------------------------------------------------------------------------------------
@@ -119,7 +375,7 @@ fn signed_8_bit_to_16(value: u8) -> u16{
 }
 
 ///General purpose function for branch opcodes
-fn branch(cpu: &mut MOS6502, branch_condition: bool, address_mode: AddressMode) -> u8{
+fn branch(cpu: &mut MOS6502, branch_condition: bool, address_mode: AddressModeFunction) -> u8{
     let (relative_address, additional_cycles) = address_mode(cpu);
     let address = signed_8_bit_to_16(cpu.read(relative_address)) + cpu.program_counter;
     let mut extra_cycles = 0;
