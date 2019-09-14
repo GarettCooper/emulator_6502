@@ -3,25 +3,25 @@ mod opcodes;
 use std::u8;
 
 //Declare some type alias for clarity's sake
-pub (crate) type AddressModeFunction = fn(&mut MOS6502) -> (u16, u8);
-pub (crate) type OpcodeFunction = fn(&mut MOS6502, AddressModeFunction) -> u8;
+type AddressModeFunction = fn(&mut MOS6502) -> (u16, u8);
+type OpcodeFunction = fn(&mut MOS6502, AddressModeFunction) -> u8;
 
 
 #[derive(Debug)]
 pub struct MOS6502{
-                //Registers
-    pub (crate) accumulator: u8 ,
-    pub (crate) x_register: u8,
-    pub (crate) y_register: u8,
-    pub (crate) program_counter: u16,
-    pub (crate) stack_pointer: u8,
-    pub (crate) status_register: u8,
-                 //Callbacks
-    pub (crate) read: fn(u16) -> u8,
-    pub (crate) write: fn(u16, u8),
-                //Other
-                ///The number of cycles before the next opcode is run
-    pub (crate) remaining_cycles: u8
+    //Registers
+    accumulator: u8 ,
+    x_register: u8,
+    y_register: u8,
+    program_counter: u16,
+    stack_pointer: u8,
+    status_register: u8,
+    //Callbacks
+    read: fn(u16) -> u8,
+    write: fn(u16, u8),
+    //Other
+    ///The number of cycles before the next opcode is run
+    remaining_cycles: u8
 }
 
 impl MOS6502{
@@ -240,7 +240,7 @@ pub (crate) enum AddressModeValue {
 }
 
 #[derive(Copy, Clone)]
-pub (crate) enum StatusFlag {
+enum StatusFlag {
     Carry= 0b00000001,
     Zero = 0b00000010,
     InterruptDisable = 0b00000100,
