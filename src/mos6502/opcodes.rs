@@ -7,7 +7,7 @@ use super::MOS6502;
 use super::StatusFlag;
 use super::AddressModeFunction;
 use super::OpcodeFunction;
-use super::AddressModeValue;
+use super::address_modes::AddressModeValue;
 
 pub (crate) struct Opcode{
     function: OpcodeFunction,
@@ -17,7 +17,7 @@ pub (crate) struct Opcode{
 
 //static OPCODE_TABLE: [Opcode; 256] = [
     //TODO: Create static opcode table
-    //Opcode{ function: brk, address_mode: imp, cycles: 7 } //0x00
+    //Opcode{ function: brk, address_mode: super::address_modes::, cycles: 7 } //0x00
 //];
 
 
@@ -38,13 +38,15 @@ fn adc(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
     //Only run if the CPU is not built in NES mode
     //TODO: Make sure cpu is removed as dead code in nes builds
     if cfg!(not(nes)) && cpu.get_flag(StatusFlag::Decimal){
-        let mut sum = cpu.accumulator.wrapping_add(value);
-        if (cpu.accumulator & 0x0f) + (value & 0x0f) > 0x09{
+        let mut sum = cpu.accumulator.wrapping_add(value).wrapping_add(cpu.get_flag(StatusFlag::Carry) as u8);
+        if (cpu.accumulator & 0x0f) + (value & 0x0f) + cpu.get_flag(StatusFlag::Carry) as u8 > 0x09{
             sum = sum.wrapping_add(0x06);
         }
         if (sum & 0xf0) > 0x90{
             sum = sum.wrapping_add(0x60);
             cpu.set_flag(StatusFlag::Carry, true);
+        } else {
+            cpu.set_flag(StatusFlag::Carry, false);
         }
         result = sum as u16;
     } else {
@@ -54,10 +56,10 @@ fn adc(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
         cpu.set_flag(StatusFlag::Carry, result > u8::max_value() as u16);
     }
     //TODO: Verify that these flags are set correctly in decimal mode
-    cpu.set_flag(StatusFlag::Zero, result == 0);
+    cpu.set_flag(StatusFlag::Zero, result as u8 == 0);
 
     //Set the Overflow flag if a signed overflow has occurred
-    cpu.set_flag(StatusFlag::Overflow, (!(cpu.accumulator ^ value) & (cpu.accumulator ^ result as u8) & StatusFlag::Overflow as u8) > 0);
+    cpu.set_flag(StatusFlag::Overflow, (!(cpu.accumulator ^ value) & (cpu.accumulator ^ result as u8) & StatusFlag::Negative as u8) > 0);
 
     //Negative flag is in bit 7, so it can be used to test if the result is negative, because a negative value will also have a 1 in bit 7
     cpu.set_flag(StatusFlag::Negative, result as u8 & StatusFlag::Negative as u8 > 0);
@@ -391,4 +393,191 @@ fn branch(cpu: &mut MOS6502, branch_condition: bool, address_mode: AddressModeFu
     }
 
     return extra_cycles;
+}
+
+//TESTS--------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod test{
+
+    use super::MOS6502;
+    use super::StatusFlag;
+    use super::super::address_modes::AddressModeValue;
+    use super::*;
+
+    #[test]
+    fn test_adc(){
+        let mut cpu_initial = MOS6502{
+            accumulator: 0x09,
+            x_register: 0x00,
+            y_register: 0x00,
+            program_counter: 0x0000,
+            stack_pointer: 0xFD,
+            status_register: 0x00,
+            read: |address| {
+                match address{
+                    0x00ff => 0x10,
+                    _ => panic!("Unintended Address Accessed")
+                }
+            },
+            write: |address, data| {panic!{"Write function was called"}},
+            remaining_cycles: 0
+        };
+        cpu_initial.set_flag(StatusFlag::Carry, true);
+
+        let mut cpu_expected = MOS6502{accumulator:0x1a,..cpu_initial.clone()};
+        cpu_expected.set_flag(StatusFlag::Carry, false);
+
+        adc(&mut cpu_initial, AddressModeValue::AbsoluteAddress(0x00ff));
+
+        assert_eq!(cpu_initial, cpu_expected);
+    }
+
+    #[test]
+    fn test_adc_zero_carry_flags(){
+        let mut cpu_initial = MOS6502{
+            accumulator: 0xff,
+            x_register: 0x00,
+            y_register: 0x00,
+            program_counter: 0x0000,
+            stack_pointer: 0xFD,
+            status_register: 0x00,
+            read: |address| {
+                match address{
+                    0x00ff => 0x01,
+                    _ => panic!("Unintended Address Accessed")
+                }
+            },
+            write: |address, data| {panic!{"Write function was called"}},
+            remaining_cycles: 0
+        };
+
+        let mut cpu_expected = MOS6502{accumulator:0x00,..cpu_initial.clone()};
+        cpu_expected.set_flag(StatusFlag::Zero, true);
+        cpu_expected.set_flag(StatusFlag::Carry, true);
+
+
+        adc(&mut cpu_initial, AddressModeValue::AbsoluteAddress(0x00ff));
+
+        assert_eq!(cpu_initial, cpu_expected);
+    }
+
+    #[test]
+    fn test_adc_overflow_negative_flags(){
+        let mut cpu_initial = MOS6502{
+            accumulator: 0x7f,
+            x_register: 0x00,
+            y_register: 0x00,
+            program_counter: 0x0000,
+            stack_pointer: 0xFD,
+            status_register: 0x00,
+            read: |address| {
+                match address{
+                    0x00ff => 0x01,
+                    _ => panic!("Unintended Address Accessed")
+                }
+            },
+            write: |address, data| {panic!{"Write function was called"}},
+            remaining_cycles: 0
+        };
+
+        let mut cpu_expected = MOS6502{accumulator:0x80,..cpu_initial.clone()};
+        cpu_expected.set_flag(StatusFlag::Overflow, true);
+        cpu_expected.set_flag(StatusFlag::Negative, true);
+
+
+        adc(&mut cpu_initial, AddressModeValue::AbsoluteAddress(0x00ff));
+
+        assert_eq!(cpu_initial, cpu_expected);
+    }
+
+    #[test]
+    #[cfg(not(nes))]
+    fn test_adc_decimal_mode(){
+        let mut cpu_initial = MOS6502{
+            accumulator: 0x09,
+            x_register: 0x00,
+            y_register: 0x00,
+            program_counter: 0x0000,
+            stack_pointer: 0xFD,
+            status_register: 0x00,
+            read: |address| {
+                match address{
+                    0x00ff => 0x09,
+                    _ => panic!("Unintended Address Accessed")
+                }
+            },
+            write: |address, data| {panic!{"Write function was called"}},
+            remaining_cycles: 0
+        };
+        cpu_initial.set_flag(StatusFlag::Decimal, true);
+        cpu_initial.set_flag(StatusFlag::Carry, true);
+
+        let mut cpu_expected = MOS6502{accumulator:0x19,..cpu_initial.clone()};
+        cpu_expected.set_flag(StatusFlag::Carry, false);
+
+        adc(&mut cpu_initial, AddressModeValue::AbsoluteAddress(0x00ff));
+
+        assert_eq!(cpu_initial, cpu_expected);
+    }
+
+    #[test]
+    #[cfg(not(nes))]
+    fn test_adc_decimal_mode_zero_carry_flags(){
+        let mut cpu_initial = MOS6502{
+            accumulator: 0x98,
+            x_register: 0x00,
+            y_register: 0x00,
+            program_counter: 0x0000,
+            stack_pointer: 0xFD,
+            status_register: 0x00,
+            read: |address| {
+                match address{
+                    0x00ff => 0x01,
+                    _ => panic!("Unintended Address Accessed")
+                }
+            },
+            write: |address, data| {panic!{"Write function was called"}},
+            remaining_cycles: 0
+        };
+        cpu_initial.set_flag(StatusFlag::Decimal, true);
+        cpu_initial.set_flag(StatusFlag::Carry, true);
+
+        let mut cpu_expected = MOS6502{accumulator:0x00,..cpu_initial.clone()};
+        cpu_expected.set_flag(StatusFlag::Zero, true);
+
+        adc(&mut cpu_initial, AddressModeValue::AbsoluteAddress(0x00ff));
+
+        assert_eq!(cpu_initial, cpu_expected);
+    }
+
+    #[test]
+    #[cfg(not(nes))]
+    fn test_adc_decimal_mode_overflow_negative_flags(){
+        let mut cpu_initial = MOS6502{
+            accumulator: 0x75,
+            x_register: 0x00,
+            y_register: 0x00,
+            program_counter: 0x0000,
+            stack_pointer: 0xFD,
+            status_register: 0x00,
+            read: |address| {
+                match address{
+                    0x00ff => 0x06,
+                    _ => panic!("Unintended Address Accessed")
+                }
+            },
+            write: |address, data| {panic!{"Write function was called"}},
+            remaining_cycles: 0
+        };
+        cpu_initial.set_flag(StatusFlag::Decimal, true);
+
+        let mut cpu_expected = MOS6502{accumulator:0x81,..cpu_initial.clone()};
+        cpu_expected.set_flag(StatusFlag::Negative, true);
+        cpu_expected.set_flag(StatusFlag::Overflow, true);
+
+        adc(&mut cpu_initial, AddressModeValue::AbsoluteAddress(0x00ff));
+
+        assert_eq!(cpu_initial, cpu_expected);
+    }
 }

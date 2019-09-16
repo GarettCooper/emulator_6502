@@ -8,7 +8,7 @@ type AddressModeFunction = fn(&mut MOS6502) -> (u16, u8);
 type OpcodeFunction = fn(&mut MOS6502, AddressModeFunction) -> u8;
 
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct MOS6502{
     //Registers
     accumulator: u8 ,
