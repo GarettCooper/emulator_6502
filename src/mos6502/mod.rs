@@ -67,6 +67,7 @@ impl MOS6502{
         if self.remaining_cycles == 0 {
             //pre-increment program counter
             self.program_counter += 1;
+            let instruction = opcodes::OPCODE_TABLE[cpu.read(self.program_counter)];
         }
         self.remaining_cycles -= 1;
     }
