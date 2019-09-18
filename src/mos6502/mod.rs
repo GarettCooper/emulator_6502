@@ -2,11 +2,20 @@ mod opcodes;
 mod address_modes;
 
 use std::u8;
+use address_modes::*;
 
 //Declare some type alias for clarity's sake
-type AddressModeFunction = fn(&mut MOS6502) -> (u16, u8);
-type OpcodeFunction = fn(&mut MOS6502, AddressModeFunction) -> u8;
+type AddressModeFunction = fn(&mut MOS6502) -> (AddressModeValue, u8);
+type OpcodeFunction = fn(&mut MOS6502, AddressModeValue) -> u8;
 
+///The value that will be added to the stack pointer
+const STACK_PAGE: u16 = 0x0100;
+///The address that the program counter will be read from when a non-maskable interrupt request is made
+const NMI_ADDRESS_LOCATION: u16 = 0xfffa;
+///The address that the program counter will be read from when reset is called
+const RESET_ADDRESS_LOCATION: u16 = 0xfffa;
+///The address that the program counter will be read from when an interrupt request is made or BRK is called
+const IRQ_ADDRESS_LOCATION: u16 = 0xfffe;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct MOS6502{
@@ -77,6 +86,38 @@ impl MOS6502{
         return ((self.read(address + 1) as u16) << 8) | self.read(address) as u16;
     }
 
+    ///Wrapper to write 16 bits instead of 8
+    fn write_16(&self, address: u16, data: u16){
+        //Remember little-endianness
+        self.write(address, (data >> 8) as u8);
+        self.write(address, data as u8);
+    }
+
+    ///Pushes a byte onto the stack
+    fn push_stack(&mut self, data: u8){
+        self.write(STACK_PAGE + self.stack_pointer as u16, data);
+        self.stack_pointer -= 1;
+    }
+
+    ///Pushes two bytes onto the stack
+    fn push_stack_16(&mut self, data: u16){
+        self.push_stack((data >> 8) as u8);
+        self.push_stack(data as u8);
+    }
+
+    ///Pops a byte from the stack
+    fn pop_stack(&mut self) -> u8{
+        self.stack_pointer += 1;
+        return self.read(STACK_PAGE + self.stack_pointer as u16);
+    }
+
+    ///Pops two bytes from the stack
+    fn pop_stack_16(&mut self) -> u16{
+        let lo = self.pop_stack() as u16;
+        let hi = self.pop_stack() as u16;
+        return (hi << 8) | lo;
+    }
+
     fn set_flag(&mut self, flag: StatusFlag, value: bool){
         //Clear flag
         self.status_register &= !(flag as u8);
@@ -106,6 +147,8 @@ enum StatusFlag {
     Zero = 0b00000010,
     InterruptDisable = 0b00000100,
     Decimal = 0b00001000,
+    Break = 0b00110000,
+    BreakIrq = 0b00100000,
     Overflow = 0b01000000,
     Negative = 0b10000000
 }
