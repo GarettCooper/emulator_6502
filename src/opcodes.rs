@@ -12,13 +12,14 @@ use super::OpcodeFunction;
 use super::address_modes::*;
 use illegal::*;
 
-pub (crate) struct Opcode{
+#[derive(Clone, Copy)]
+pub (super) struct Opcode{
     function: OpcodeFunction,
     address_mode: AddressModeFunction,
     cycles: u8
 }
 
-static OPCODE_TABLE: [Opcode; 256] = [
+pub (super) static OPCODE_TABLE: [Opcode; 256] = [
     Opcode{ function: brk, address_mode: implied, cycles: 7 },		//0x0
     Opcode{ function: ora, address_mode: indirect_x, cycles: 6 },		//0x1
     Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0x2
