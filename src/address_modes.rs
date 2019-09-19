@@ -3,8 +3,6 @@
 //  number of extra cycles that may be required under specific circumstances (Typically crossing page boundaries)
 
 use super::MOS6502;
-use super::AddressModeFunction;
-use super::OpcodeFunction;
 
 ///Absolute: Address mode returning a 16-bit absolute address
 pub (crate) fn absolute(cpu: &mut MOS6502) -> (AddressModeValue, u8){
@@ -47,11 +45,6 @@ pub (crate) fn absolute_y(cpu: &mut MOS6502) -> (AddressModeValue, u8){
     return (AddressModeValue::AbsoluteAddress(offset_address), extra_cycles);
 }
 
-///Accumulator: Address mode which operates on the value in the accumulator instead of at a memory address
-pub (crate) fn accumulator(cpu: &mut MOS6502) -> (AddressModeValue, u8){
-    return (AddressModeValue::Accumulator, 0);
-}
-
 ///Immediate: Address mode using next byte as value
 pub (crate) fn immediate(cpu: &mut MOS6502) -> (AddressModeValue, u8){
     //Return the current location of the program counter
@@ -61,7 +54,7 @@ pub (crate) fn immediate(cpu: &mut MOS6502) -> (AddressModeValue, u8){
 }
 
 ///Implied: Address mode for opcodes that do not require a value or address
-pub (crate) fn implied(cpu: &mut MOS6502) -> (AddressModeValue, u8){
+pub (crate) fn implied(_cpu: &mut MOS6502) -> (AddressModeValue, u8){
     return (AddressModeValue::Implied, 0);
 }
 
@@ -142,7 +135,6 @@ pub (crate) fn zero_page_y(cpu: &mut MOS6502) -> (AddressModeValue, u8){
 #[derive(Debug, PartialEq)]
 pub (crate) enum AddressModeValue {
     Implied,
-    Accumulator,
     RelativeAddress(u8),
     AbsoluteAddress(u16)
 }
@@ -151,7 +143,7 @@ pub (crate) enum AddressModeValue {
 
 #[cfg(test)]
 mod test{
-
+#![allow(unused_variables, unused_mut)] //Allow some warnings for test code
     use super::*;
 
     #[test]
@@ -216,19 +208,6 @@ mod test{
 
         assert_eq!(address_mode_value, AddressModeValue::AbsoluteAddress(0x110f));
         assert_eq!(extra_cycles, 1);
-        assert_eq!(expected_program_counter, cpu.program_counter)
-    }
-
-    #[test]
-    fn test_accumulator(){
-        let mut cpu = MOS6502::new(|address|{ panic!("Read function was called")},
-                                   |address, data|{ panic!("Write function was called")});
-
-        let expected_program_counter = cpu.program_counter;
-        let (address_mode_value, extra_cycles) = accumulator(&mut cpu);
-
-        assert_eq!(address_mode_value, AddressModeValue::Accumulator);
-        assert_eq!(extra_cycles, 0);
         assert_eq!(expected_program_counter, cpu.program_counter)
     }
 

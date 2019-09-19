@@ -19,6 +19,22 @@ pub (super) struct Opcode{
     cycles: u8
 }
 
+impl Opcode{
+    
+    pub (super) fn execute_instruction(& self, cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+        return (self.function)(cpu, address_mode_value)
+    }
+
+    pub (super) fn find_address(& self, cpu: &mut MOS6502) -> (AddressModeValue, u8){
+        return (self.address_mode)(cpu)
+    }
+
+    pub (super) fn get_cycles(& self) -> u8{
+        return self.cycles
+    }
+
+}
+
 pub (super) static OPCODE_TABLE: [Opcode; 256] = [
     Opcode{ function: brk, address_mode: implied, cycles: 7 },		//0x0
     Opcode{ function: ora, address_mode: indirect_x, cycles: 6 },		//0x1
@@ -346,7 +362,7 @@ fn asl(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
     }
 
     match address_mode_value{
-        AddressModeValue::Accumulator => {
+        AddressModeValue::Implied => {
             cpu.accumulator = asl_wrapped(cpu, cpu.accumulator);
         },
         AddressModeValue::AbsoluteAddress(address) => {
@@ -402,7 +418,7 @@ fn bpl(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 }
 
 ///BRK: Force an interrupt
-fn brk(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn brk(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.program_counter += 1; //Increase program counter by 1 so it returns to the correct place
     cpu.push_stack_16(cpu.program_counter);
     cpu.push_stack(cpu.status_register);
@@ -422,25 +438,25 @@ fn bvs(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 }
 
 ///CLC: Clear carry bit
-fn clc(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn clc(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.set_flag(StatusFlag::Carry, false);
     return 0;
 }
 
 ///CLD: Clear decimal mode bit
-fn cld(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn cld(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.set_flag(StatusFlag::Decimal, false);
     return 0;
 }
 
 ///CLD: Clear interrupt disable bit
-fn cli(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn cli(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.set_flag(StatusFlag::InterruptDisable, false);
     return 0;
 }
 
 ///CLD: Clear overflow bit
-fn clv(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn clv(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.set_flag(StatusFlag::Overflow, false);
     return 0;
 }
@@ -621,7 +637,7 @@ fn lsr(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
     }
 
     match address_mode_value{
-        AddressModeValue::Accumulator => {
+        AddressModeValue::Implied => {
             cpu.accumulator = lsr_wrapped(cpu, cpu.accumulator);
         },
         AddressModeValue::AbsoluteAddress(address) => {
@@ -634,7 +650,7 @@ fn lsr(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 }
 
 ///NOP: No operation
-fn nop(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn nop(_cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     return 0;
 }
 
@@ -653,25 +669,27 @@ fn ora(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 }
 
 ///PHA: Push the value of the accumulator onto the stack
-fn pha(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn pha(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.push_stack(cpu.accumulator);
     return 0
 }
 
 ///PHP: Push the value of the status byte onto the stack
-fn php(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn php(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.push_stack(cpu.status_register);
     return 0
 }
 
 ///PLA: Sets the accumulator to a value popped off the top of the stack
-fn pla(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn pla(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.accumulator = cpu.pop_stack();
+    cpu.set_flag(StatusFlag::Negative, cpu.accumulator & StatusFlag::Negative as u8 > 0);
+    cpu.set_flag(StatusFlag::Zero, cpu.accumulator == 0);
     return 0;
 }
 
 ///PLP: Sets the status byte to a value popped off the top of the stack
-fn plp(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn plp(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.status_register = cpu.pop_stack();
     return 0;
 }
@@ -690,7 +708,7 @@ fn rol(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
     }
 
     match address_mode_value{
-        AddressModeValue::Accumulator => {
+        AddressModeValue::Implied => {
             cpu.accumulator = rol_wrapped(cpu, cpu.accumulator);
         },
         AddressModeValue::AbsoluteAddress(address) => {
@@ -716,7 +734,7 @@ fn ror(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
     }
 
     match address_mode_value{
-        AddressModeValue::Accumulator => {
+        AddressModeValue::Implied => {
             cpu.accumulator = ror_wrapped(cpu, cpu.accumulator);
         },
         AddressModeValue::AbsoluteAddress(address) => {
@@ -729,7 +747,7 @@ fn ror(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 }
 
 ///RTI: Returns from an interrupt, reversing the operations performed by the BRK instruction
-fn rti(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn rti(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.status_register = cpu.pop_stack();
     cpu.program_counter = cpu.pop_stack_16();
     return 0;
@@ -787,19 +805,19 @@ fn sbc(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 }
 
 ///SEC: Sets the carry bit to one
-fn sec(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn sec(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.set_flag(StatusFlag::Carry, true);
     return 0;
 }
 
 ///SED: Sets the decimal bit to one
-fn sed(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn sed(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.set_flag(StatusFlag::Decimal, true);
     return 0;
 }
 
 ///SEI: Sets the interrupt disable bit to one
-fn sei(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn sei(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.set_flag(StatusFlag::InterruptDisable, true);
     return 0;
 }
@@ -835,7 +853,7 @@ fn sty(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 }
 
 ///TAX: Transfer the accumulator into the x register
-fn tax(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn tax(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.x_register = cpu.accumulator;
     cpu.set_flag(StatusFlag::Negative, cpu.x_register & StatusFlag::Negative as u8 > 0);
     cpu.set_flag(StatusFlag::Zero, cpu.x_register == 0);
@@ -843,7 +861,7 @@ fn tax(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 }
 
 ///TAY: Transfer the accumulator into the y register
-fn tay(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn tay(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.y_register = cpu.accumulator;
     cpu.set_flag(StatusFlag::Negative, cpu.y_register & StatusFlag::Negative as u8 > 0);
     cpu.set_flag(StatusFlag::Zero, cpu.y_register == 0);
@@ -851,7 +869,7 @@ fn tay(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 }
 
 ///TSS: Transfer the stack pointer into the x register
-fn tsx(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn tsx(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.x_register = cpu.stack_pointer;
     cpu.set_flag(StatusFlag::Negative, cpu.x_register & StatusFlag::Negative as u8 > 0);
     cpu.set_flag(StatusFlag::Zero, cpu.x_register == 0);
@@ -859,7 +877,7 @@ fn tsx(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 }
 
 ///TXA: Transfer the x register into the accumulator
-fn txa(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn txa(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.accumulator = cpu.x_register;
     cpu.set_flag(StatusFlag::Negative, cpu.accumulator & StatusFlag::Negative as u8 > 0);
     cpu.set_flag(StatusFlag::Zero, cpu.accumulator == 0);
@@ -867,13 +885,13 @@ fn txa(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 }
 
 ///TXS: Transfer the x register into the stack pointer
-fn txs(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn txs(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.stack_pointer = cpu.x_register;
     return 0;
 }
 
 ///TYA: Transfer the y register into the accumulator
-fn tya(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
+fn tya(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.accumulator = cpu.y_register;
     cpu.set_flag(StatusFlag::Negative, cpu.y_register & StatusFlag::Negative as u8 > 0);
     cpu.set_flag(StatusFlag::Zero, cpu.y_register == 0);
@@ -933,6 +951,7 @@ fn compare(cpu: &mut MOS6502, register: u8, address_mode_value: AddressModeValue
 
 #[cfg(test)]
 mod test{
+#![allow(unused_variables, unused_mut)] //Allow some warnings for test code
 
     use super::MOS6502;
     use super::StatusFlag;
@@ -1231,7 +1250,7 @@ mod test{
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
 
-        asl(&mut cpu_initial, AddressModeValue::Accumulator);
+        asl(&mut cpu_initial, AddressModeValue::Implied);
 
         assert_eq!(cpu_initial, cpu_expected);
     }
@@ -1999,7 +2018,7 @@ mod test{
         cpu_expected.set_flag(StatusFlag::Carry, true);
 
 
-        lsr(&mut cpu_initial, AddressModeValue::Accumulator);
+        lsr(&mut cpu_initial, AddressModeValue::Implied);
 
         assert_eq!(cpu_initial, cpu_expected);
     }
@@ -2128,7 +2147,7 @@ mod test{
             remaining_cycles: 0
         };
 
-        let cpu_expected = MOS6502{accumulator: 0xff, stack_pointer: 0xfd,..cpu_initial.clone()};
+        let cpu_expected = MOS6502{accumulator: 0xff, stack_pointer: 0xfd, status_register: 0x80 ,..cpu_initial.clone()};
 
         pla(&mut cpu_initial, AddressModeValue::Implied);
 
@@ -2211,7 +2230,7 @@ mod test{
         cpu_expected.set_flag(StatusFlag::Zero, true);
         cpu_expected.set_flag(StatusFlag::Carry, true);
 
-        rol(&mut cpu_initial, AddressModeValue::Accumulator);
+        rol(&mut cpu_initial, AddressModeValue::Implied);
 
         assert_eq!(cpu_initial, cpu_expected);
     }
@@ -2266,7 +2285,7 @@ mod test{
         cpu_expected.set_flag(StatusFlag::Zero, true);
         cpu_expected.set_flag(StatusFlag::Carry, true);
 
-        ror(&mut cpu_initial, AddressModeValue::Accumulator);
+        ror(&mut cpu_initial, AddressModeValue::Implied);
 
         assert_eq!(cpu_initial, cpu_expected);
     }
@@ -2292,9 +2311,9 @@ mod test{
             remaining_cycles: 0
         };
 
-        let mut cpu_expected = MOS6502{program_counter: 0x4001, status_register: 0xe1, stack_pointer: 0xfd ,..cpu_initial.clone()};
+        let cpu_expected = MOS6502{program_counter: 0x4001, status_register: 0xe1, stack_pointer: 0xfd ,..cpu_initial.clone()};
 
-        rti(&mut cpu_initial, AddressModeValue::Accumulator);
+        rti(&mut cpu_initial, AddressModeValue::Implied);
 
         assert_eq!(cpu_initial, cpu_expected);
     }
@@ -2430,7 +2449,7 @@ mod test{
         cpu_initial.set_flag(StatusFlag::Decimal, true);
         cpu_initial.set_flag(StatusFlag::Carry, true);
 
-        let mut cpu_expected = MOS6502{accumulator: 0x06,..cpu_initial.clone()};
+        let cpu_expected = MOS6502{accumulator: 0x06,..cpu_initial.clone()};
 
         assert_eq!(sbc(&mut cpu_initial,AddressModeValue::AbsoluteAddress(0x00ff)), 0);
         assert_eq!(cpu_initial, cpu_expected);
@@ -2478,7 +2497,7 @@ mod test{
             remaining_cycles: 0
         };
 
-        let mut cpu_expected = MOS6502{..cpu_initial.clone()};
+        let cpu_expected = MOS6502{..cpu_initial.clone()};
 
         sta(&mut cpu_initial, AddressModeValue::AbsoluteAddress(0x00ff));
 
@@ -2502,7 +2521,7 @@ mod test{
             remaining_cycles: 0
         };
 
-        let mut cpu_expected = MOS6502{..cpu_initial.clone()};
+        let cpu_expected = MOS6502{..cpu_initial.clone()};
 
         stx(&mut cpu_initial, AddressModeValue::AbsoluteAddress(0x00ff));
 
@@ -2526,7 +2545,7 @@ mod test{
             remaining_cycles: 0
         };
 
-        let mut cpu_expected = MOS6502{..cpu_initial.clone()};
+        let cpu_expected = MOS6502{..cpu_initial.clone()};
 
         sty(&mut cpu_initial, AddressModeValue::AbsoluteAddress(0x00ff));
 

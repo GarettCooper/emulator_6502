@@ -68,6 +68,9 @@ impl MOS6502{
             //pre-increment program counter
             self.program_counter += 1;
             let instruction = opcodes::OPCODE_TABLE[self.read(self.program_counter) as usize];
+            let (address_mode_value, mut extra_cycles) = instruction.find_address(self);
+            extra_cycles += instruction.execute_instruction(self, address_mode_value);
+            self.remaining_cycles += extra_cycles + instruction.get_cycles();
         }
         self.remaining_cycles -= 1;
     }
