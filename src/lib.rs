@@ -17,6 +17,7 @@ const RESET_ADDRESS_LOCATION: u16 = 0xfffa;
 ///The address that the program counter will be read from when an interrupt request is made or BRK is called
 const IRQ_ADDRESS_LOCATION: u16 = 0xfffe;
 
+///The struct representation of the MOS 6502 processor
 #[derive(Debug, PartialEq, Clone)]
 pub struct MOS6502{
     //Registers
@@ -31,7 +32,10 @@ pub struct MOS6502{
     write: fn(u16, u8),
     //Other
     ///The number of cycles before the next opcode is run
-    remaining_cycles: u8
+    remaining_cycles: u8,
+    //Tracking Booleans
+    pending_nmi: bool,
+    pending_irq: bool
 }
 
 impl MOS6502{
@@ -47,7 +51,9 @@ impl MOS6502{
             status_register: 0x34,
             read: read_fn,
             write: write_fn,
-            remaining_cycles: 0
+            remaining_cycles: 0,
+            pending_nmi: false,
+            pending_irq: false
         }
     }
 
@@ -63,23 +69,41 @@ impl MOS6502{
 
     ///Runs a processor cycle
     pub fn cycle(&mut self){
-
         if self.remaining_cycles == 0 {
-            //pre-increment program counter
-            self.program_counter += 1;
-            let instruction = opcodes::OPCODE_TABLE[self.read(self.program_counter) as usize];
-            let (address_mode_value, mut extra_cycles) = instruction.find_address(self);
-            extra_cycles += instruction.execute_instruction(self, address_mode_value);
-            self.remaining_cycles += extra_cycles + instruction.get_cycles();
+            if self.pending_nmi || (self.pending_irq && !self.get_flag(StatusFlag::InterruptDisable)) { //An interrupt will let the executing instruction complete
+                self.push_stack_16(self.program_counter);
+                self.push_stack(self.status_register);
+                self.set_flag(StatusFlag::BreakIrq, true);
+                self.set_flag(StatusFlag::InterruptDisable, true);
+
+                if self.pending_nmi {
+                    self.program_counter = self.read_16(NMI_ADDRESS_LOCATION);
+                    self.remaining_cycles = 8;
+                } else {
+                    self.program_counter = self.read_16(IRQ_ADDRESS_LOCATION);
+                    self.remaining_cycles = 7;
+                }
+
+                self.pending_nmi = false;
+                self.pending_irq = false;
+
+            } else { //Proceed normally
+                let instruction = opcodes::OPCODE_TABLE[self.read(self.program_counter) as usize];
+                let (address_mode_value, mut extra_cycles) = instruction.find_address(self);
+                extra_cycles += instruction.execute_instruction(self, address_mode_value);
+                self.remaining_cycles += extra_cycles + instruction.get_cycles();
+                self.program_counter += 1;
+            }
         }
         self.remaining_cycles -= 1;
     }
 
+    ///Wraps the write function provided at creation
     fn write(&self, address: u16, data: u8){
         (self.write)(address, data);
     }
 
-    ///Wraps the read function provided passed at creation
+    ///Wraps the read function provided at creation
     fn read(&self, address: u16) -> u8{
         return (self.read)(address);
     }
@@ -122,6 +146,7 @@ impl MOS6502{
         return (hi << 8) | lo;
     }
 
+    ///Sets a status flag to the given boolean value
     fn set_flag(&mut self, flag: StatusFlag, value: bool){
         //Clear flag
         self.status_register &= !(flag as u8);
@@ -131,17 +156,50 @@ impl MOS6502{
         }
     }
 
+    ///Returns the value of a flag in the status register as a boolean
     fn get_flag(&self, flag: StatusFlag) -> bool{
         return (self.status_register & flag as u8) > 0;
     }
 
+    ///Request that an interrupt occurs after the current instruction completes
+    pub fn interrupt_request(&mut self){
+        self.pending_irq = true;
+    }
+
+    ///Request that an interrupt occurs after the current instruction completes, even if the interrupt disabled flag is set
+    pub fn non_maskable_interrupt_request(&mut self){
+        self.pending_nmi = true;
+    }
+
+    ///Resets the 6502 to a known state
     pub fn reset(&mut self){
+        self.program_counter = self.read_16(RESET_ADDRESS_LOCATION);
+
         self.accumulator = 0x00;
         self.x_register = 0x00;
         self.y_register = 0x00;
-        self.program_counter = 0x0000;
+
         self.stack_pointer = 0xFD;
         self.status_register = 0x34;
+        self.remaining_cycles = 8;
+    }
+}
+
+impl Default for MOS6502{
+    fn default() -> Self{
+        MOS6502{
+            accumulator: 0x00,
+            x_register: 0x00,
+            y_register: 0x00,
+            program_counter: 0x0000,
+            stack_pointer: 0xFD,
+            status_register: 0x34,
+            read: |_| {panic!("Read function is not set!") },
+            write: |_,_| {panic!("Write function is not set!") },
+            remaining_cycles: 0,
+            pending_nmi: false,
+            pending_irq: false
+        }
     }
 }
 

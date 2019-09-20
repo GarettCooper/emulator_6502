@@ -423,6 +423,7 @@ fn brk(cpu: &mut MOS6502, _address_mode_value: AddressModeValue) -> u8{
     cpu.push_stack_16(cpu.program_counter);
     cpu.push_stack(cpu.status_register);
     cpu.set_flag(StatusFlag::Break, true);
+    cpu.set_flag(StatusFlag::InterruptDisable, true);
     cpu.program_counter = cpu.read_16(super::IRQ_ADDRESS_LOCATION);
     return 0;
 }
@@ -974,7 +975,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Carry, true);
 
@@ -1002,7 +1003,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator:0x00,..cpu_initial.clone()};
@@ -1031,7 +1032,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator:0x80,..cpu_initial.clone()};
@@ -1061,7 +1062,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
         cpu_initial.set_flag(StatusFlag::Carry, true);
@@ -1091,7 +1092,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
         cpu_initial.set_flag(StatusFlag::Carry, true);
@@ -1121,7 +1122,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
 
@@ -1160,7 +1161,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator:0x80,..cpu_initial.clone()};
@@ -1188,7 +1189,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator:0x00,..cpu_initial.clone()};
@@ -1219,7 +1220,7 @@ mod test{
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x4f << 1);
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -1242,7 +1243,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator:0x00,..cpu_initial.clone()};
@@ -1279,11 +1280,12 @@ mod test{
                     _ => panic!("Unintended Address Accessed {:4X}", _address)
                 }
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{program_counter:0x8001, stack_pointer:0xfa,..cpu_initial.clone()};
         cpu_expected.set_flag(StatusFlag::Break, true);
+        cpu_expected.set_flag(StatusFlag::InterruptDisable, true);
 
         brk(&mut cpu_initial, AddressModeValue::Implied);
 
@@ -1302,7 +1304,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{program_counter:0x0100,..cpu_initial.clone()};
@@ -1322,7 +1324,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{program_counter:0x0005,..cpu_initial.clone()};
@@ -1342,7 +1344,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -1367,7 +1369,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -1393,7 +1395,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -1420,7 +1422,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -1447,7 +1449,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -1476,7 +1478,7 @@ mod test{
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x00);
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -1505,7 +1507,7 @@ mod test{
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0xff);
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -1526,7 +1528,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{x_register: 0x00,..cpu_initial.clone()};
@@ -1547,7 +1549,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{x_register: 0xff,..cpu_initial.clone()};
@@ -1568,7 +1570,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{y_register: 0x00,..cpu_initial.clone()};
@@ -1589,7 +1591,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{y_register: 0xff,..cpu_initial.clone()};
@@ -1615,7 +1617,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator:0x90,..cpu_initial.clone()};
@@ -1643,7 +1645,7 @@ mod test{
                 }
             },
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator:0x00,..cpu_initial.clone()};
@@ -1673,7 +1675,7 @@ mod test{
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x00);
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -1702,7 +1704,7 @@ mod test{
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x80);
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -1723,7 +1725,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{x_register: 0x00,..cpu_initial.clone()};
@@ -1744,7 +1746,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{x_register: 0x80,..cpu_initial.clone()};
@@ -1765,7 +1767,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{y_register: 0x00,..cpu_initial.clone()};
@@ -1786,7 +1788,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{y_register: 0x80,..cpu_initial.clone()};
@@ -1807,7 +1809,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{program_counter: 0x00ff,..cpu_initial.clone()};
@@ -1833,7 +1835,7 @@ mod test{
                     _ => panic!("Unintended Address Accessed: 0x{:X}", address)
                 }
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{program_counter: 0x00ff, stack_pointer: 0xfb,..cpu_initial.clone()};
@@ -1853,7 +1855,7 @@ mod test{
             status_register: 0x00,
             read: |address| {0xff},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator: 0xff,..cpu_initial.clone()};
@@ -1874,7 +1876,7 @@ mod test{
             status_register: 0x00,
             read: |address| {0x00},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator: 0x00,..cpu_initial.clone()};
@@ -1895,7 +1897,7 @@ mod test{
             status_register: 0x00,
             read: |address| {0xff},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{x_register: 0xff,..cpu_initial.clone()};
@@ -1916,7 +1918,7 @@ mod test{
             status_register: 0x00,
             read: |address| {0x00},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{x_register: 0x00,..cpu_initial.clone()};
@@ -1937,7 +1939,7 @@ mod test{
             status_register: 0x00,
             read: |address| {0xff},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{y_register: 0xff,..cpu_initial.clone()};
@@ -1958,7 +1960,7 @@ mod test{
             status_register: 0x00,
             read: |address| {0x00},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{y_register: 0x00,..cpu_initial.clone()};
@@ -1987,7 +1989,7 @@ mod test{
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0xff >> 1);
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -2010,7 +2012,7 @@ mod test{
             status_register: 0x00,
             read: |address| {panic!{"Read function was called"}},
             write: |address, data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator:0x00,..cpu_initial.clone()};
@@ -2039,7 +2041,7 @@ mod test{
                 }
             },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator:0x90,..cpu_initial.clone()};
@@ -2066,7 +2068,7 @@ mod test{
                 }
             },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator:0x00,..cpu_initial.clone()};
@@ -2092,7 +2094,7 @@ mod test{
                     _ => panic!("Unintended Address Accessed: 0x{:X}", address)
                 }
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{stack_pointer: 0xfc,..cpu_initial.clone()};
@@ -2118,7 +2120,7 @@ mod test{
                     _ => panic!("Unintended Address Accessed: 0x{:X}", address)
                 }
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{stack_pointer: 0xfc,..cpu_initial.clone()};
@@ -2144,7 +2146,7 @@ mod test{
                 }
             },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{accumulator: 0xff, stack_pointer: 0xfd, status_register: 0x80 ,..cpu_initial.clone()};
@@ -2170,7 +2172,7 @@ mod test{
                 }
             },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{status_register: 0x81, stack_pointer: 0xfd,..cpu_initial.clone()};
@@ -2199,7 +2201,7 @@ mod test{
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x83);
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Carry, true);
 
@@ -2223,7 +2225,7 @@ mod test{
             status_register: 0x00,
             read: |_address| {panic!{"Read function was called"}},
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator: 0x00,..cpu_initial.clone()};
@@ -2254,7 +2256,7 @@ mod test{
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x81);
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Carry, true);
 
@@ -2278,7 +2280,7 @@ mod test{
             status_register: 0x00,
             read: |_address| {panic!{"Read function was called"}},
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator: 0x00,..cpu_initial.clone()};
@@ -2308,7 +2310,7 @@ mod test{
                 }
             },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{program_counter: 0x4001, status_register: 0xe1, stack_pointer: 0xfd ,..cpu_initial.clone()};
@@ -2335,7 +2337,7 @@ mod test{
                 }
             },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{program_counter: 0x1001, stack_pointer: 0xfd,..cpu_initial.clone()};
@@ -2355,7 +2357,7 @@ mod test{
             status_register: 0x00,
             read: |_address| { 0x08 },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Carry, true);
 
@@ -2376,7 +2378,7 @@ mod test{
             status_register: 0x00,
             read: |_address| { 0x02 },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Carry, true);
 
@@ -2398,7 +2400,7 @@ mod test{
             status_register: 0x00,
             read: |_address| { 0x10 },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Carry, true);
 
@@ -2420,7 +2422,7 @@ mod test{
             status_register: 0x00,
             read: |_address| { 0x11 },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Carry, true);
 
@@ -2444,7 +2446,7 @@ mod test{
             status_register: 0x00,
             read: |_address| { 0x06 },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
         cpu_initial.set_flag(StatusFlag::Carry, true);
@@ -2467,7 +2469,7 @@ mod test{
             status_register: 0x00,
             read: |_address| { 0x18 },
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
         cpu_initial.set_flag(StatusFlag::Carry, true);
@@ -2494,7 +2496,7 @@ mod test{
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x01);
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -2518,7 +2520,7 @@ mod test{
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x01);
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -2542,7 +2544,7 @@ mod test{
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x01);
             },
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{..cpu_initial.clone()};
@@ -2563,7 +2565,7 @@ mod test{
             status_register: 0x00,
             read: |_address| {panic!{"Read function was called"}},
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{x_register: 0x00,..cpu_initial.clone()};
@@ -2585,7 +2587,7 @@ mod test{
             status_register: 0x00,
             read: |_address| {panic!{"Read function was called"}},
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{y_register: 0x00,..cpu_initial.clone()};
@@ -2607,7 +2609,7 @@ mod test{
             status_register: 0x00,
             read: |_address| {panic!{"Read function was called"}},
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{x_register: 0xfd,..cpu_initial.clone()};
@@ -2629,7 +2631,7 @@ mod test{
             status_register: 0x00,
             read: |_address| {panic!{"Read function was called"}},
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502{accumulator: 0x80,..cpu_initial.clone()};
@@ -2651,7 +2653,7 @@ mod test{
             status_register: 0x00,
             read: |_address| {panic!{"Read function was called"}},
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{stack_pointer: 0x00,..cpu_initial.clone()};
@@ -2672,7 +2674,7 @@ mod test{
             status_register: 0x00,
             read: |_address| {panic!{"Read function was called"}},
             write: |_address, _data| {panic!{"Write function was called"}},
-            remaining_cycles: 0
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502{accumulator: 0x01,..cpu_initial.clone()};
