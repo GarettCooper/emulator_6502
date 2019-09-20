@@ -40,8 +40,11 @@ pub struct MOS6502{
 
 impl MOS6502{
 
-    ///Creates a new MOS6502 emulation
-    pub fn new(read_fn: fn(u16) -> u8, write_fn: fn(u16, u8)) -> MOS6502{
+
+
+    ///Creates a new MOS6502 emulation with some shortcuts for testing
+    #[cfg(test)]
+    pub fn test_new(read_fn: fn(u16) -> u8, write_fn: fn(u16, u8)) -> MOS6502{
         MOS6502{
             accumulator: 0x00,
             x_register: 0x00,
@@ -185,6 +188,7 @@ impl MOS6502{
     }
 }
 
+#[cfg(test)] //This default implementation is only to make testing easier, and should not be exposed
 impl Default for MOS6502{
     fn default() -> Self{
         MOS6502{

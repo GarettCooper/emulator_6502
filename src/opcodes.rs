@@ -304,7 +304,7 @@ fn adc(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 
         //Only run if the CPU is not built in NES mode
         //TODO: Make sure cpu is removed as dead code in nes builds
-        if cfg!(not(nes)) && cpu.get_flag(StatusFlag::Decimal){
+        if cfg!(feature = "binary_coded_decimal") && cpu.get_flag(StatusFlag::Decimal){
             let mut sum = cpu.accumulator.wrapping_add(value).wrapping_add(cpu.get_flag(StatusFlag::Carry) as u8);
             if (cpu.accumulator & 0x0f) + (value & 0x0f) + cpu.get_flag(StatusFlag::Carry) as u8 > 0x09{
                 sum = sum.wrapping_add(0x06);
@@ -774,7 +774,7 @@ fn sbc(cpu: &mut MOS6502, address_mode_value: AddressModeValue) -> u8{
 
         //Only run if the CPU is not built in NES mode
         //TODO: Make sure cpu is removed as dead code in nes builds
-        if cfg!(not(nes)) && cpu.get_flag(StatusFlag::Decimal){
+        if cfg!(feature = "binary_coded_decimal") && cpu.get_flag(StatusFlag::Decimal){
             let mut sum = cpu.accumulator.wrapping_add(value).wrapping_add(cpu.get_flag(StatusFlag::Carry) as u8);
             if (cpu.accumulator & 0x0f) + (value & 0x0f) + cpu.get_flag(StatusFlag::Carry) as u8 > 0x09{
                 sum = sum.wrapping_sub(0x06);
@@ -1046,7 +1046,7 @@ mod test{
     }
 
     #[test]
-    #[cfg(not(nes))]
+    #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_mode(){
         let mut cpu_initial = MOS6502{
             accumulator: 0x09,
@@ -1076,7 +1076,7 @@ mod test{
     }
 
     #[test]
-    #[cfg(not(nes))]
+    #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_mode_zero_carry_flags(){
         let mut cpu_initial = MOS6502{
             accumulator: 0x98,
@@ -1106,7 +1106,7 @@ mod test{
     }
 
     #[test]
-    #[cfg(not(nes))]
+    #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_mode_overflow_negative_flags(){
         let mut cpu_initial = MOS6502{
             accumulator: 0x75,
@@ -2435,7 +2435,7 @@ mod test{
     }
 
     #[test]
-    #[cfg(not(nes))]
+    #[cfg(feature = "binary_coded_decimal")]
     fn test_sbc_decimal(){
         let mut cpu_initial = MOS6502{
             accumulator: 0x12,
@@ -2458,7 +2458,7 @@ mod test{
     }
 
     #[test]
-    #[cfg(not(nes))]
+    #[cfg(feature = "binary_coded_decimal")]
     fn test_sbc_decimal_carry_negative(){
         let mut cpu_initial = MOS6502{
             accumulator: 0x12,
