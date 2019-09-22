@@ -1,11 +1,7 @@
 # 6502-emulator
-Hello friends, prospective employers, and people who Googled "6502 emulator rust", you've found a small personal project I've been working on
-since early September of 2019 to use as a talking point during the interview process for my Winter 2020 co-op placement.
+Hello friends, prospective employers, and people who Googled "6502 emulator rust", you've found a small personal project I've been working on since early September of 2019 to use as a talking point during the interview process for my Winter 2020 co-op placement.
 
-This is a general purpose Rust implementation of an [MOS 6502](https://en.wikipedia.org/wiki/MOS_Technology_6502) emulator, capable of executing code in isolation
-or as part of one of the many systems the 6502 was used in, including the Commodore 64, Apple II, and Nintendo Entertainment System. To do
-so, the library provides the Interface6502 trait which allows the client to implement its own functions for reading and writing to memory
-addresses.
+This is a general purpose Rust implementation of an [MOS 6502](https://en.wikipedia.org/wiki/MOS_Technology_6502) emulator, capable of executing code in isolation or as part of one of the many systems the 6502 was used in, including the Commodore 64, Apple II, and Nintendo Entertainment System. To do so, the library provides the Interface6502 trait which allows the client to implement its own functions for reading and writing to memory addresses.
 
 *The following samples use the current version of the emulator's public interface, which is still subject to change over the immediate future.*
 
@@ -33,8 +29,7 @@ impl Interface6502 for BasicRam{
 
 ```
 
-In this example, the interface to be used with the emulator simply maps addresses to ram locations. The client is responsible for loading
-the 6502 binary program it wishes to run into an appropriate part of the address range.
+In this example, the interface to be used with the emulator simply maps addresses to ram locations. The client is responsible for loading the 6502 binary program it wishes to run into an appropriate part of the address range.
 
 ### Running a program
 
@@ -50,4 +45,13 @@ fn main(){
 }
 
 ```
-Each cycle/instruction the processor borrows mutable ownership of the interface in order to read and write to it.
+Each cycle/instruction the processor borrows mutable ownership of the interface in order to read and write to it. 
+
+NOTE: When an instruction is executed, the entire computation is carried out simultaneously before the processor simply waits for the
+remaining number of cycles, meaning that timing of reads and writes is only accurate on an instruction-by-instruction basis, not cycle-by-cycle
+
+### Supported Features:
+* Binary Coded Decimal when the "binary_coded_decimal" compilation feature is enabled
+* ... hopefully more if I get around to it
+
+Currently undocumented instructions are implemented as placeholder functions which cause the emulator to panic when called.
