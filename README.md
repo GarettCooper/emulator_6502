@@ -14,7 +14,9 @@ struct BasicBus{
 }
 
 impl BasicRam {
-    // Functions for loading a program into the ram go here
+    fn load_program(&mut self, start: usize, data: &mut Vec<u8>){
+        self.ram[start..].clone_from_slice(data);
+    }
 }
 
 impl Interface6502 for BasicRam{
@@ -29,7 +31,9 @@ impl Interface6502 for BasicRam{
 
 ```
 
-In this example, the interface to be used with the emulator simply maps addresses to ram locations. The client is responsible for loading the 6502 binary program it wishes to run into an appropriate part of the address range.
+In this example, the interface to be used with the emulator simply maps addresses to ram locations. The client is responsible for loading the 6502 binary program it wishes to run into an appropriate part of the address range. A more complex interface could map specific addresses to other emulated device components.
+
+For example, a NES implementation using this 6502 emulator would map reads and writes to addresses 0x2000-0x2007 to communication with the NES' picture processing unit, while a Commodore 64 implementation would map addresses 0xd000-0xd3ff for drawing to the screen.
 
 ### Running a program
 
@@ -37,7 +41,15 @@ In this example, the interface to be used with the emulator simply maps addresse
 
 fn main(){
   let mut ram = BasicRam{ ram: Box::new([0; u16::max_value() as usize + 1]) };
+  
   //Load a program into memory...
+  let mut file = File::open("C:/some_6502_program.bin")?;
+  let mut buffer = Vec::new();
+  file.read_to_end(&mut buffer);
+  
+  //Copy it into the BasicRam
+  ram.load_program(0x0400, &mut buffer);
+  
   let mut cpu = MOS6502::new(); //Create a new emulator instance
   cpu.set_program_counter(0x0400); //Set the program counter to the first byte of the program in memory
   cpu.cycle(&mut ram); // The emulator can execute cycles individually, for systems that require precise timing...
@@ -45,12 +57,14 @@ fn main(){
 }
 
 ```
-Each cycle/instruction the processor borrows mutable ownership of the interface in order to read and write to it. 
+Each cycle/instruction the processor borrows mutable ownership of the interface in order to read and write to it.
 
 NOTE: When an instruction is executed, the entire computation is carried out simultaneously before the processor simply waits for the
 remaining number of cycles, meaning that timing of reads and writes is only accurate on an instruction-by-instruction basis, not cycle-by-cycle
 
 ### Supported Features:
+* Full implementation of documented instruction set
+* Emulation of bugs that existed in the original 6502 hardware
 * Binary Coded Decimal when the "binary_coded_decimal" compilation feature is enabled
 * ... hopefully more if I get around to it
 
