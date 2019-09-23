@@ -10,14 +10,19 @@ use super::address_modes::*;
 use illegal::*;
 
 #[derive(Clone, Copy)]
-pub (super) struct Opcode{
+pub (super) struct Opcode<'a>{
+    name: &'a str, //For logging
     function: OpcodeFunction,
     address_mode: AddressModeFunction,
     cycles: u8
 }
 
-impl Opcode{
-    
+impl Opcode<'_>{
+
+    pub (super) fn get_name(&self) -> &str{
+        return self.name
+    }
+
     pub (super) fn execute_instruction(&self, cpu: &mut MOS6502, interface: &mut dyn Interface6502, address_mode_value: AddressModeValue) -> u8{
         return (self.function)(cpu, interface, address_mode_value)
     }
@@ -33,262 +38,262 @@ impl Opcode{
 }
 
 pub (super) static OPCODE_TABLE: [Opcode; 256] = [
-    Opcode{ function: brk, address_mode: implied, cycles: 7 },		//0x0
-    Opcode{ function: ora, address_mode: indirect_x, cycles: 6 },		//0x1
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0x2
-    Opcode{ function: slo, address_mode: indirect_x, cycles: 8 },		//0x3
-    Opcode{ function: nop, address_mode: zero_page, cycles: 3 },		//0x4
-    Opcode{ function: ora, address_mode: zero_page, cycles: 3 },		//0x5
-    Opcode{ function: asl, address_mode: zero_page, cycles: 5 },		//0x6
-    Opcode{ function: slo, address_mode: zero_page, cycles: 5 },		//0x7
-    Opcode{ function: php, address_mode: implied, cycles: 3 },		//0x8
-    Opcode{ function: ora, address_mode: immediate, cycles: 2 },		//0x9
-    Opcode{ function: asl, address_mode: implied, cycles: 2 },		//0xa
-    Opcode{ function: anc, address_mode: immediate, cycles: 2 },		//0xb
-    Opcode{ function: nop, address_mode: absolute, cycles: 4 },		//0xc
-    Opcode{ function: ora, address_mode: absolute, cycles: 4 },		//0xd
-    Opcode{ function: asl, address_mode: absolute, cycles: 6 },		//0xe
-    Opcode{ function: slo, address_mode: absolute, cycles: 6 },		//0xf
-    Opcode{ function: bpl, address_mode: relative, cycles: 2 },		//0x10
-    Opcode{ function: ora, address_mode: indirect_y, cycles: 5 },		//0x11
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0x12
-    Opcode{ function: slo, address_mode: indirect_y, cycles: 8 },		//0x13
-    Opcode{ function: nop, address_mode: zero_page_x, cycles: 4 },		//0x14
-    Opcode{ function: ora, address_mode: zero_page_x, cycles: 4 },		//0x15
-    Opcode{ function: asl, address_mode: zero_page_x, cycles: 6 },		//0x16
-    Opcode{ function: slo, address_mode: zero_page_x, cycles: 6 },		//0x17
-    Opcode{ function: clc, address_mode: implied, cycles: 2 },		//0x18
-    Opcode{ function: ora, address_mode: absolute_y, cycles: 4 },		//0x19
-    Opcode{ function: nop, address_mode: implied, cycles: 2 },		//0x1a
-    Opcode{ function: slo, address_mode: absolute_y, cycles: 7 },		//0x1b
-    Opcode{ function: nop, address_mode: absolute_x, cycles: 4 },		//0x1c
-    Opcode{ function: ora, address_mode: absolute_x, cycles: 4 },		//0x1d
-    Opcode{ function: asl, address_mode: absolute_x, cycles: 7 },		//0x1e
-    Opcode{ function: slo, address_mode: absolute_x, cycles: 7 },		//0x1f
-    Opcode{ function: jsr, address_mode: absolute, cycles: 6 },		//0x20
-    Opcode{ function: and, address_mode: indirect_x, cycles: 6 },		//0x21
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0x22
-    Opcode{ function: rla, address_mode: indirect_x, cycles: 8 },		//0x23
-    Opcode{ function: bit, address_mode: zero_page, cycles: 3 },		//0x24
-    Opcode{ function: and, address_mode: zero_page, cycles: 3 },		//0x25
-    Opcode{ function: rol, address_mode: zero_page, cycles: 5 },		//0x26
-    Opcode{ function: rla, address_mode: zero_page, cycles: 5 },		//0x27
-    Opcode{ function: plp, address_mode: implied, cycles: 4 },		//0x28
-    Opcode{ function: and, address_mode: immediate, cycles: 2 },		//0x29
-    Opcode{ function: rol, address_mode: implied, cycles: 2 },		//0x2a
-    Opcode{ function: anc, address_mode: immediate, cycles: 2 },		//0x2b
-    Opcode{ function: bit, address_mode: absolute, cycles: 4 },		//0x2c
-    Opcode{ function: and, address_mode: absolute, cycles: 4 },		//0x2d
-    Opcode{ function: rol, address_mode: absolute, cycles: 6 },		//0x2e
-    Opcode{ function: rla, address_mode: absolute, cycles: 6 },		//0x2f
-    Opcode{ function: bmi, address_mode: relative, cycles: 2 },		//0x30
-    Opcode{ function: and, address_mode: indirect_y, cycles: 5 },		//0x31
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0x32
-    Opcode{ function: rla, address_mode: indirect_y, cycles: 8 },		//0x33
-    Opcode{ function: nop, address_mode: zero_page_x, cycles: 4 },		//0x34
-    Opcode{ function: and, address_mode: zero_page_x, cycles: 4 },		//0x35
-    Opcode{ function: rol, address_mode: zero_page_x, cycles: 6 },		//0x36
-    Opcode{ function: rla, address_mode: zero_page_x, cycles: 6 },		//0x37
-    Opcode{ function: sec, address_mode: implied, cycles: 2 },		//0x38
-    Opcode{ function: and, address_mode: absolute_y, cycles: 4 },		//0x39
-    Opcode{ function: nop, address_mode: implied, cycles: 2 },		//0x3a
-    Opcode{ function: rla, address_mode: absolute_y, cycles: 7 },		//0x3b
-    Opcode{ function: nop, address_mode: absolute_x, cycles: 4 },		//0x3c
-    Opcode{ function: and, address_mode: absolute_x, cycles: 4 },		//0x3d
-    Opcode{ function: rol, address_mode: absolute_x, cycles: 7 },		//0x3e
-    Opcode{ function: rla, address_mode: absolute_x, cycles: 7 },		//0x3f
-    Opcode{ function: rti, address_mode: implied, cycles: 6 },		//0x40
-    Opcode{ function: eor, address_mode: indirect_x, cycles: 6 },		//0x41
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0x42
-    Opcode{ function: sre, address_mode: indirect_x, cycles: 8 },		//0x43
-    Opcode{ function: nop, address_mode: zero_page, cycles: 3 },		//0x44
-    Opcode{ function: eor, address_mode: zero_page, cycles: 3 },		//0x45
-    Opcode{ function: lsr, address_mode: zero_page, cycles: 5 },		//0x46
-    Opcode{ function: sre, address_mode: zero_page, cycles: 5 },		//0x47
-    Opcode{ function: pha, address_mode: implied, cycles: 3 },		//0x48
-    Opcode{ function: eor, address_mode: immediate, cycles: 2 },		//0x49
-    Opcode{ function: lsr, address_mode: implied, cycles: 2 },		//0x4a
-    Opcode{ function: alr, address_mode: immediate, cycles: 2 },		//0x4b
-    Opcode{ function: jmp, address_mode: absolute, cycles: 3 },		//0x4c
-    Opcode{ function: eor, address_mode: absolute, cycles: 4 },		//0x4d
-    Opcode{ function: lsr, address_mode: absolute, cycles: 6 },		//0x4e
-    Opcode{ function: sre, address_mode: absolute, cycles: 6 },		//0x4f
-    Opcode{ function: bvc, address_mode: relative, cycles: 2 },		//0x50
-    Opcode{ function: eor, address_mode: indirect_y, cycles: 5 },		//0x51
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0x52
-    Opcode{ function: sre, address_mode: indirect_y, cycles: 8 },		//0x53
-    Opcode{ function: nop, address_mode: zero_page_x, cycles: 4 },		//0x54
-    Opcode{ function: eor, address_mode: zero_page_x, cycles: 4 },		//0x55
-    Opcode{ function: lsr, address_mode: zero_page_x, cycles: 6 },		//0x56
-    Opcode{ function: sre, address_mode: zero_page_x, cycles: 6 },		//0x57
-    Opcode{ function: cli, address_mode: implied, cycles: 2 },		//0x58
-    Opcode{ function: eor, address_mode: absolute_y, cycles: 4 },		//0x59
-    Opcode{ function: nop, address_mode: implied, cycles: 2 },		//0x5a
-    Opcode{ function: sre, address_mode: absolute_y, cycles: 7 },		//0x5b
-    Opcode{ function: nop, address_mode: absolute_x, cycles: 4 },		//0x5c
-    Opcode{ function: eor, address_mode: absolute_x, cycles: 4 },		//0x5d
-    Opcode{ function: lsr, address_mode: absolute_x, cycles: 7 },		//0x5e
-    Opcode{ function: sre, address_mode: absolute_x, cycles: 7 },		//0x5f
-    Opcode{ function: rts, address_mode: implied, cycles: 6 },		//0x60
-    Opcode{ function: adc, address_mode: indirect_x, cycles: 6 },		//0x61
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0x62
-    Opcode{ function: rra, address_mode: indirect_x, cycles: 8 },		//0x63
-    Opcode{ function: nop, address_mode: zero_page, cycles: 3 },		//0x64
-    Opcode{ function: adc, address_mode: zero_page, cycles: 3 },		//0x65
-    Opcode{ function: ror, address_mode: zero_page, cycles: 5 },		//0x66
-    Opcode{ function: rra, address_mode: zero_page, cycles: 5 },		//0x67
-    Opcode{ function: pla, address_mode: implied, cycles: 4 },		//0x68
-    Opcode{ function: adc, address_mode: immediate, cycles: 2 },		//0x69
-    Opcode{ function: ror, address_mode: implied, cycles: 2 },		//0x6a
-    Opcode{ function: arr, address_mode: immediate, cycles: 2 },		//0x6b
-    Opcode{ function: jmp, address_mode: indirect, cycles: 5 },		//0x6c
-    Opcode{ function: adc, address_mode: absolute, cycles: 4 },		//0x6d
-    Opcode{ function: ror, address_mode: absolute, cycles: 6 },		//0x6e
-    Opcode{ function: rra, address_mode: absolute, cycles: 6 },		//0x6f
-    Opcode{ function: bvs, address_mode: relative, cycles: 2 },		//0x70
-    Opcode{ function: adc, address_mode: indirect_y, cycles: 5 },		//0x71
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0x72
-    Opcode{ function: rra, address_mode: indirect_y, cycles: 8 },		//0x73
-    Opcode{ function: nop, address_mode: zero_page_x, cycles: 4 },		//0x74
-    Opcode{ function: adc, address_mode: zero_page_x, cycles: 4 },		//0x75
-    Opcode{ function: ror, address_mode: zero_page_x, cycles: 6 },		//0x76
-    Opcode{ function: rra, address_mode: zero_page_x, cycles: 6 },		//0x77
-    Opcode{ function: sei, address_mode: implied, cycles: 2 },		//0x78
-    Opcode{ function: adc, address_mode: absolute_y, cycles: 4 },		//0x79
-    Opcode{ function: nop, address_mode: implied, cycles: 2 },		//0x7a
-    Opcode{ function: rra, address_mode: absolute_y, cycles: 7 },		//0x7b
-    Opcode{ function: nop, address_mode: absolute_x, cycles: 4 },		//0x7c
-    Opcode{ function: adc, address_mode: absolute_x, cycles: 4 },		//0x7d
-    Opcode{ function: ror, address_mode: absolute_x, cycles: 7 },		//0x7e
-    Opcode{ function: rra, address_mode: absolute_x, cycles: 7 },		//0x7f
-    Opcode{ function: nop, address_mode: immediate, cycles: 2 },		//0x80
-    Opcode{ function: sta, address_mode: indirect_x, cycles: 6 },		//0x81
-    Opcode{ function: nop, address_mode: immediate, cycles: 2 },		//0x82
-    Opcode{ function: sax, address_mode: indirect_x, cycles: 6 },		//0x83
-    Opcode{ function: sty, address_mode: zero_page, cycles: 3 },		//0x84
-    Opcode{ function: sta, address_mode: zero_page, cycles: 3 },		//0x85
-    Opcode{ function: stx, address_mode: zero_page, cycles: 3 },		//0x86
-    Opcode{ function: sax, address_mode: zero_page, cycles: 3 },		//0x87
-    Opcode{ function: dey, address_mode: implied, cycles: 2 },		//0x88
-    Opcode{ function: nop, address_mode: immediate, cycles: 2 },		//0x89
-    Opcode{ function: txa, address_mode: implied, cycles: 2 },		//0x8a
-    Opcode{ function: xaa, address_mode: immediate, cycles: 2 },		//0x8b
-    Opcode{ function: sty, address_mode: absolute, cycles: 4 },		//0x8c
-    Opcode{ function: sta, address_mode: absolute, cycles: 4 },		//0x8d
-    Opcode{ function: stx, address_mode: absolute, cycles: 4 },		//0x8e
-    Opcode{ function: sax, address_mode: absolute, cycles: 4 },		//0x8f
-    Opcode{ function: bcc, address_mode: relative, cycles: 2 },		//0x90
-    Opcode{ function: sta, address_mode: indirect_y, cycles: 6 },		//0x91
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0x92
-    Opcode{ function: ahx, address_mode: indirect_y, cycles: 6 },		//0x93
-    Opcode{ function: sty, address_mode: zero_page_x, cycles: 4 },		//0x94
-    Opcode{ function: sta, address_mode: zero_page_x, cycles: 4 },		//0x95
-    Opcode{ function: stx, address_mode: zero_page_y, cycles: 4 },		//0x96
-    Opcode{ function: sax, address_mode: zero_page_y, cycles: 4 },		//0x97
-    Opcode{ function: tya, address_mode: implied, cycles: 2 },		//0x98
-    Opcode{ function: sta, address_mode: absolute_y, cycles: 5 },		//0x99
-    Opcode{ function: txs, address_mode: implied, cycles: 2 },		//0x9a
-    Opcode{ function: tas, address_mode: absolute_y, cycles: 5 },		//0x9b
-    Opcode{ function: shy, address_mode: absolute_x, cycles: 5 },		//0x9c
-    Opcode{ function: sta, address_mode: absolute_x, cycles: 5 },		//0x9d
-    Opcode{ function: shx, address_mode: absolute_y, cycles: 5 },		//0x9e
-    Opcode{ function: ahx, address_mode: absolute_y, cycles: 5 },		//0x9f
-    Opcode{ function: ldy, address_mode: immediate, cycles: 2 },		//0xa0
-    Opcode{ function: lda, address_mode: indirect_x, cycles: 6 },		//0xa1
-    Opcode{ function: ldx, address_mode: immediate, cycles: 2 },		//0xa2
-    Opcode{ function: lax, address_mode: indirect_x, cycles: 6 },		//0xa3
-    Opcode{ function: ldy, address_mode: zero_page, cycles: 3 },		//0xa4
-    Opcode{ function: lda, address_mode: zero_page, cycles: 3 },		//0xa5
-    Opcode{ function: ldx, address_mode: zero_page, cycles: 3 },		//0xa6
-    Opcode{ function: lax, address_mode: zero_page, cycles: 3 },		//0xa7
-    Opcode{ function: tay, address_mode: implied, cycles: 2 },		//0xa8
-    Opcode{ function: lda, address_mode: immediate, cycles: 2 },		//0xa9
-    Opcode{ function: tax, address_mode: implied, cycles: 2 },		//0xaa
-    Opcode{ function: lax, address_mode: immediate, cycles: 2 },		//0xab
-    Opcode{ function: ldy, address_mode: absolute, cycles: 4 },		//0xac
-    Opcode{ function: lda, address_mode: absolute, cycles: 4 },		//0xad
-    Opcode{ function: ldx, address_mode: absolute, cycles: 4 },		//0xae
-    Opcode{ function: lax, address_mode: absolute, cycles: 4 },		//0xaf
-    Opcode{ function: bcs, address_mode: relative, cycles: 2 },		//0xb0
-    Opcode{ function: lda, address_mode: indirect_y, cycles: 5 },		//0xb1
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0xb2
-    Opcode{ function: lax, address_mode: indirect_y, cycles: 5 },		//0xb3
-    Opcode{ function: ldy, address_mode: zero_page_x, cycles: 4 },		//0xb4
-    Opcode{ function: lda, address_mode: zero_page_x, cycles: 4 },		//0xb5
-    Opcode{ function: ldx, address_mode: zero_page_y, cycles: 4 },		//0xb6
-    Opcode{ function: lax, address_mode: zero_page_y, cycles: 4 },		//0xb7
-    Opcode{ function: clv, address_mode: implied, cycles: 2 },		//0xb8
-    Opcode{ function: lda, address_mode: absolute_y, cycles: 4 },		//0xb9
-    Opcode{ function: tsx, address_mode: implied, cycles: 2 },		//0xba
-    Opcode{ function: las, address_mode: absolute_y, cycles: 4 },		//0xbb
-    Opcode{ function: ldy, address_mode: absolute_x, cycles: 4 },		//0xbc
-    Opcode{ function: lda, address_mode: absolute_x, cycles: 4 },		//0xbd
-    Opcode{ function: ldx, address_mode: absolute_y, cycles: 4 },		//0xbe
-    Opcode{ function: lax, address_mode: absolute_y, cycles: 4 },		//0xbf
-    Opcode{ function: cpy, address_mode: immediate, cycles: 2 },		//0xc0
-    Opcode{ function: cmp, address_mode: indirect_x, cycles: 6 },		//0xc1
-    Opcode{ function: nop, address_mode: immediate, cycles: 2 },		//0xc2
-    Opcode{ function: dcp, address_mode: indirect_x, cycles: 8 },		//0xc3
-    Opcode{ function: cpy, address_mode: zero_page, cycles: 3 },		//0xc4
-    Opcode{ function: cmp, address_mode: zero_page, cycles: 3 },		//0xc5
-    Opcode{ function: dec, address_mode: zero_page, cycles: 5 },		//0xc6
-    Opcode{ function: dcp, address_mode: zero_page, cycles: 5 },		//0xc7
-    Opcode{ function: iny, address_mode: implied, cycles: 2 },		//0xc8
-    Opcode{ function: cmp, address_mode: immediate, cycles: 2 },		//0xc9
-    Opcode{ function: dex, address_mode: implied, cycles: 2 },		//0xca
-    Opcode{ function: axs, address_mode: immediate, cycles: 2 },		//0xcb
-    Opcode{ function: cpy, address_mode: absolute, cycles: 4 },		//0xcc
-    Opcode{ function: cmp, address_mode: absolute, cycles: 4 },		//0xcd
-    Opcode{ function: dec, address_mode: absolute, cycles: 6 },		//0xce
-    Opcode{ function: dcp, address_mode: absolute, cycles: 6 },		//0xcf
-    Opcode{ function: bne, address_mode: relative, cycles: 2 },		//0xd0
-    Opcode{ function: cmp, address_mode: indirect_y, cycles: 5 },		//0xd1
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0xd2
-    Opcode{ function: dcp, address_mode: indirect_y, cycles: 8 },		//0xd3
-    Opcode{ function: nop, address_mode: zero_page_x, cycles: 4 },		//0xd4
-    Opcode{ function: cmp, address_mode: zero_page_x, cycles: 4 },		//0xd5
-    Opcode{ function: dec, address_mode: zero_page_x, cycles: 6 },		//0xd6
-    Opcode{ function: dcp, address_mode: zero_page_x, cycles: 6 },		//0xd7
-    Opcode{ function: cld, address_mode: implied, cycles: 2 },		//0xd8
-    Opcode{ function: cmp, address_mode: absolute_y, cycles: 4 },		//0xd9
-    Opcode{ function: nop, address_mode: implied, cycles: 2 },		//0xda
-    Opcode{ function: dcp, address_mode: absolute_y, cycles: 7 },		//0xdb
-    Opcode{ function: nop, address_mode: absolute_x, cycles: 4 },		//0xdc
-    Opcode{ function: cmp, address_mode: absolute_x, cycles: 4 },		//0xdd
-    Opcode{ function: dec, address_mode: absolute_x, cycles: 7 },		//0xde
-    Opcode{ function: dcp, address_mode: absolute_x, cycles: 7 },		//0xdf
-    Opcode{ function: cpx, address_mode: immediate, cycles: 2 },		//0xe0
-    Opcode{ function: sbc, address_mode: indirect_x, cycles: 6 },		//0xe1
-    Opcode{ function: nop, address_mode: immediate, cycles: 2 },		//0xe2
-    Opcode{ function: isc, address_mode: indirect_x, cycles: 8 },		//0xe3
-    Opcode{ function: cpx, address_mode: zero_page, cycles: 3 },		//0xe4
-    Opcode{ function: sbc, address_mode: zero_page, cycles: 3 },		//0xe5
-    Opcode{ function: inc, address_mode: zero_page, cycles: 5 },		//0xe6
-    Opcode{ function: isc, address_mode: zero_page, cycles: 5 },		//0xe7
-    Opcode{ function: inx, address_mode: implied, cycles: 2 },		//0xe8
-    Opcode{ function: sbc, address_mode: immediate, cycles: 2 },		//0xe9
-    Opcode{ function: nop, address_mode: implied, cycles: 2 },		//0xea
-    Opcode{ function: sbc, address_mode: immediate, cycles: 2 },		//0xeb
-    Opcode{ function: cpx, address_mode: absolute, cycles: 4 },		//0xec
-    Opcode{ function: sbc, address_mode: absolute, cycles: 4 },		//0xed
-    Opcode{ function: inc, address_mode: absolute, cycles: 6 },		//0xee
-    Opcode{ function: isc, address_mode: absolute, cycles: 6 },		//0xef
-    Opcode{ function: beq, address_mode: relative, cycles: 2 },		//0xf0
-    Opcode{ function: sbc, address_mode: indirect_y, cycles: 5 },		//0xf1
-    Opcode{ function: kil, address_mode: implied, cycles: 0 },		//0xf2
-    Opcode{ function: isc, address_mode: indirect_y, cycles: 8 },		//0xf3
-    Opcode{ function: nop, address_mode: zero_page_x, cycles: 4 },		//0xf4
-    Opcode{ function: sbc, address_mode: zero_page_x, cycles: 4 },		//0xf5
-    Opcode{ function: inc, address_mode: zero_page_x, cycles: 6 },		//0xf6
-    Opcode{ function: isc, address_mode: zero_page_x, cycles: 6 },		//0xf7
-    Opcode{ function: sed, address_mode: implied, cycles: 2 },		//0xf8
-    Opcode{ function: sbc, address_mode: absolute_y, cycles: 4 },		//0xf9
-    Opcode{ function: nop, address_mode: implied, cycles: 2 },		//0xfa
-    Opcode{ function: isc, address_mode: absolute_y, cycles: 7 },		//0xfb
-    Opcode{ function: nop, address_mode: absolute_x, cycles: 4 },		//0xfc
-    Opcode{ function: sbc, address_mode: absolute_x, cycles: 4 },		//0xfd
-    Opcode{ function: inc, address_mode: absolute_x, cycles: 7 },		//0xfe
-    Opcode{ function: isc, address_mode: absolute_x, cycles: 7 },		//0xff
+    Opcode{ name:"brk", function: brk, address_mode: implied, cycles: 7 },		//0x0
+    Opcode{ name:"ora", function: ora, address_mode: indirect_x, cycles: 6 },		//0x1
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x2
+    Opcode{ name:"slo", function: slo, address_mode: indirect_x, cycles: 8 },		//0x3
+    Opcode{ name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x4
+    Opcode{ name:"ora", function: ora, address_mode: zero_page, cycles: 3 },		//0x5
+    Opcode{ name:"asl", function: asl, address_mode: zero_page, cycles: 5 },		//0x6
+    Opcode{ name:"slo", function: slo, address_mode: zero_page, cycles: 5 },		//0x7
+    Opcode{ name:"php", function: php, address_mode: implied, cycles: 3 },		//0x8
+    Opcode{ name:"ora", function: ora, address_mode: immediate, cycles: 2 },		//0x9
+    Opcode{ name:"asl", function: asl, address_mode: implied, cycles: 2 },		//0xa
+    Opcode{ name:"anc", function: anc, address_mode: immediate, cycles: 2 },		//0xb
+    Opcode{ name:"nop", function: nop, address_mode: absolute, cycles: 4 },		//0xc
+    Opcode{ name:"ora", function: ora, address_mode: absolute, cycles: 4 },		//0xd
+    Opcode{ name:"asl", function: asl, address_mode: absolute, cycles: 6 },		//0xe
+    Opcode{ name:"slo", function: slo, address_mode: absolute, cycles: 6 },		//0xf
+    Opcode{ name:"bpl", function: bpl, address_mode: relative, cycles: 2 },		//0x10
+    Opcode{ name:"ora", function: ora, address_mode: indirect_y, cycles: 5 },		//0x11
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x12
+    Opcode{ name:"slo", function: slo, address_mode: indirect_y, cycles: 8 },		//0x13
+    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x14
+    Opcode{ name:"ora", function: ora, address_mode: zero_page_x, cycles: 4 },		//0x15
+    Opcode{ name:"asl", function: asl, address_mode: zero_page_x, cycles: 6 },		//0x16
+    Opcode{ name:"slo", function: slo, address_mode: zero_page_x, cycles: 6 },		//0x17
+    Opcode{ name:"clc", function: clc, address_mode: implied, cycles: 2 },		//0x18
+    Opcode{ name:"ora", function: ora, address_mode: absolute_y, cycles: 4 },		//0x19
+    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x1a
+    Opcode{ name:"slo", function: slo, address_mode: absolute_y, cycles: 7 },		//0x1b
+    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x1c
+    Opcode{ name:"ora", function: ora, address_mode: absolute_x, cycles: 4 },		//0x1d
+    Opcode{ name:"asl", function: asl, address_mode: absolute_x, cycles: 7 },		//0x1e
+    Opcode{ name:"slo", function: slo, address_mode: absolute_x, cycles: 7 },		//0x1f
+    Opcode{ name:"jsr", function: jsr, address_mode: absolute, cycles: 6 },		//0x20
+    Opcode{ name:"and", function: and, address_mode: indirect_x, cycles: 6 },		//0x21
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x22
+    Opcode{ name:"rla", function: rla, address_mode: indirect_x, cycles: 8 },		//0x23
+    Opcode{ name:"bit", function: bit, address_mode: zero_page, cycles: 3 },		//0x24
+    Opcode{ name:"and", function: and, address_mode: zero_page, cycles: 3 },		//0x25
+    Opcode{ name:"rol", function: rol, address_mode: zero_page, cycles: 5 },		//0x26
+    Opcode{ name:"rla", function: rla, address_mode: zero_page, cycles: 5 },		//0x27
+    Opcode{ name:"plp", function: plp, address_mode: implied, cycles: 4 },		//0x28
+    Opcode{ name:"and", function: and, address_mode: immediate, cycles: 2 },		//0x29
+    Opcode{ name:"rol", function: rol, address_mode: implied, cycles: 2 },		//0x2a
+    Opcode{ name:"anc", function: anc, address_mode: immediate, cycles: 2 },		//0x2b
+    Opcode{ name:"bit", function: bit, address_mode: absolute, cycles: 4 },		//0x2c
+    Opcode{ name:"and", function: and, address_mode: absolute, cycles: 4 },		//0x2d
+    Opcode{ name:"rol", function: rol, address_mode: absolute, cycles: 6 },		//0x2e
+    Opcode{ name:"rla", function: rla, address_mode: absolute, cycles: 6 },		//0x2f
+    Opcode{ name:"bmi", function: bmi, address_mode: relative, cycles: 2 },		//0x30
+    Opcode{ name:"and", function: and, address_mode: indirect_y, cycles: 5 },		//0x31
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x32
+    Opcode{ name:"rla", function: rla, address_mode: indirect_y, cycles: 8 },		//0x33
+    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x34
+    Opcode{ name:"and", function: and, address_mode: zero_page_x, cycles: 4 },		//0x35
+    Opcode{ name:"rol", function: rol, address_mode: zero_page_x, cycles: 6 },		//0x36
+    Opcode{ name:"rla", function: rla, address_mode: zero_page_x, cycles: 6 },		//0x37
+    Opcode{ name:"sec", function: sec, address_mode: implied, cycles: 2 },		//0x38
+    Opcode{ name:"and", function: and, address_mode: absolute_y, cycles: 4 },		//0x39
+    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x3a
+    Opcode{ name:"rla", function: rla, address_mode: absolute_y, cycles: 7 },		//0x3b
+    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x3c
+    Opcode{ name:"and", function: and, address_mode: absolute_x, cycles: 4 },		//0x3d
+    Opcode{ name:"rol", function: rol, address_mode: absolute_x, cycles: 7 },		//0x3e
+    Opcode{ name:"rla", function: rla, address_mode: absolute_x, cycles: 7 },		//0x3f
+    Opcode{ name:"rti", function: rti, address_mode: implied, cycles: 6 },		//0x40
+    Opcode{ name:"eor", function: eor, address_mode: indirect_x, cycles: 6 },		//0x41
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x42
+    Opcode{ name:"sre", function: sre, address_mode: indirect_x, cycles: 8 },		//0x43
+    Opcode{ name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x44
+    Opcode{ name:"eor", function: eor, address_mode: zero_page, cycles: 3 },		//0x45
+    Opcode{ name:"lsr", function: lsr, address_mode: zero_page, cycles: 5 },		//0x46
+    Opcode{ name:"sre", function: sre, address_mode: zero_page, cycles: 5 },		//0x47
+    Opcode{ name:"pha", function: pha, address_mode: implied, cycles: 3 },		//0x48
+    Opcode{ name:"eor", function: eor, address_mode: immediate, cycles: 2 },		//0x49
+    Opcode{ name:"lsr", function: lsr, address_mode: implied, cycles: 2 },		//0x4a
+    Opcode{ name:"alr", function: alr, address_mode: immediate, cycles: 2 },		//0x4b
+    Opcode{ name:"jmp", function: jmp, address_mode: absolute, cycles: 3 },		//0x4c
+    Opcode{ name:"eor", function: eor, address_mode: absolute, cycles: 4 },		//0x4d
+    Opcode{ name:"lsr", function: lsr, address_mode: absolute, cycles: 6 },		//0x4e
+    Opcode{ name:"sre", function: sre, address_mode: absolute, cycles: 6 },		//0x4f
+    Opcode{ name:"bvc", function: bvc, address_mode: relative, cycles: 2 },		//0x50
+    Opcode{ name:"eor", function: eor, address_mode: indirect_y, cycles: 5 },		//0x51
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x52
+    Opcode{ name:"sre", function: sre, address_mode: indirect_y, cycles: 8 },		//0x53
+    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x54
+    Opcode{ name:"eor", function: eor, address_mode: zero_page_x, cycles: 4 },		//0x55
+    Opcode{ name:"lsr", function: lsr, address_mode: zero_page_x, cycles: 6 },		//0x56
+    Opcode{ name:"sre", function: sre, address_mode: zero_page_x, cycles: 6 },		//0x57
+    Opcode{ name:"cli", function: cli, address_mode: implied, cycles: 2 },		//0x58
+    Opcode{ name:"eor", function: eor, address_mode: absolute_y, cycles: 4 },		//0x59
+    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x5a
+    Opcode{ name:"sre", function: sre, address_mode: absolute_y, cycles: 7 },		//0x5b
+    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x5c
+    Opcode{ name:"eor", function: eor, address_mode: absolute_x, cycles: 4 },		//0x5d
+    Opcode{ name:"lsr", function: lsr, address_mode: absolute_x, cycles: 7 },		//0x5e
+    Opcode{ name:"sre", function: sre, address_mode: absolute_x, cycles: 7 },		//0x5f
+    Opcode{ name:"rts", function: rts, address_mode: implied, cycles: 6 },		//0x60
+    Opcode{ name:"adc", function: adc, address_mode: indirect_x, cycles: 6 },		//0x61
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x62
+    Opcode{ name:"rra", function: rra, address_mode: indirect_x, cycles: 8 },		//0x63
+    Opcode{ name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x64
+    Opcode{ name:"adc", function: adc, address_mode: zero_page, cycles: 3 },		//0x65
+    Opcode{ name:"ror", function: ror, address_mode: zero_page, cycles: 5 },		//0x66
+    Opcode{ name:"rra", function: rra, address_mode: zero_page, cycles: 5 },		//0x67
+    Opcode{ name:"pla", function: pla, address_mode: implied, cycles: 4 },		//0x68
+    Opcode{ name:"adc", function: adc, address_mode: immediate, cycles: 2 },		//0x69
+    Opcode{ name:"ror", function: ror, address_mode: implied, cycles: 2 },		//0x6a
+    Opcode{ name:"arr", function: arr, address_mode: immediate, cycles: 2 },		//0x6b
+    Opcode{ name:"jmp", function: jmp, address_mode: indirect, cycles: 5 },		//0x6c
+    Opcode{ name:"adc", function: adc, address_mode: absolute, cycles: 4 },		//0x6d
+    Opcode{ name:"ror", function: ror, address_mode: absolute, cycles: 6 },		//0x6e
+    Opcode{ name:"rra", function: rra, address_mode: absolute, cycles: 6 },		//0x6f
+    Opcode{ name:"bvs", function: bvs, address_mode: relative, cycles: 2 },		//0x70
+    Opcode{ name:"adc", function: adc, address_mode: indirect_y, cycles: 5 },		//0x71
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x72
+    Opcode{ name:"rra", function: rra, address_mode: indirect_y, cycles: 8 },		//0x73
+    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x74
+    Opcode{ name:"adc", function: adc, address_mode: zero_page_x, cycles: 4 },		//0x75
+    Opcode{ name:"ror", function: ror, address_mode: zero_page_x, cycles: 6 },		//0x76
+    Opcode{ name:"rra", function: rra, address_mode: zero_page_x, cycles: 6 },		//0x77
+    Opcode{ name:"sei", function: sei, address_mode: implied, cycles: 2 },		//0x78
+    Opcode{ name:"adc", function: adc, address_mode: absolute_y, cycles: 4 },		//0x79
+    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x7a
+    Opcode{ name:"rra", function: rra, address_mode: absolute_y, cycles: 7 },		//0x7b
+    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x7c
+    Opcode{ name:"adc", function: adc, address_mode: absolute_x, cycles: 4 },		//0x7d
+    Opcode{ name:"ror", function: ror, address_mode: absolute_x, cycles: 7 },		//0x7e
+    Opcode{ name:"rra", function: rra, address_mode: absolute_x, cycles: 7 },		//0x7f
+    Opcode{ name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x80
+    Opcode{ name:"sta", function: sta, address_mode: indirect_x, cycles: 6 },		//0x81
+    Opcode{ name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x82
+    Opcode{ name:"sax", function: sax, address_mode: indirect_x, cycles: 6 },		//0x83
+    Opcode{ name:"sty", function: sty, address_mode: zero_page, cycles: 3 },		//0x84
+    Opcode{ name:"sta", function: sta, address_mode: zero_page, cycles: 3 },		//0x85
+    Opcode{ name:"stx", function: stx, address_mode: zero_page, cycles: 3 },		//0x86
+    Opcode{ name:"sax", function: sax, address_mode: zero_page, cycles: 3 },		//0x87
+    Opcode{ name:"dey", function: dey, address_mode: implied, cycles: 2 },		//0x88
+    Opcode{ name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x89
+    Opcode{ name:"txa", function: txa, address_mode: implied, cycles: 2 },		//0x8a
+    Opcode{ name:"xaa", function: xaa, address_mode: immediate, cycles: 2 },		//0x8b
+    Opcode{ name:"sty", function: sty, address_mode: absolute, cycles: 4 },		//0x8c
+    Opcode{ name:"sta", function: sta, address_mode: absolute, cycles: 4 },		//0x8d
+    Opcode{ name:"stx", function: stx, address_mode: absolute, cycles: 4 },		//0x8e
+    Opcode{ name:"sax", function: sax, address_mode: absolute, cycles: 4 },		//0x8f
+    Opcode{ name:"bcc", function: bcc, address_mode: relative, cycles: 2 },		//0x90
+    Opcode{ name:"sta", function: sta, address_mode: indirect_y, cycles: 6 },		//0x91
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x92
+    Opcode{ name:"ahx", function: ahx, address_mode: indirect_y, cycles: 6 },		//0x93
+    Opcode{ name:"sty", function: sty, address_mode: zero_page_x, cycles: 4 },		//0x94
+    Opcode{ name:"sta", function: sta, address_mode: zero_page_x, cycles: 4 },		//0x95
+    Opcode{ name:"stx", function: stx, address_mode: zero_page_y, cycles: 4 },		//0x96
+    Opcode{ name:"sax", function: sax, address_mode: zero_page_y, cycles: 4 },		//0x97
+    Opcode{ name:"tya", function: tya, address_mode: implied, cycles: 2 },		//0x98
+    Opcode{ name:"sta", function: sta, address_mode: absolute_y, cycles: 5 },		//0x99
+    Opcode{ name:"txs", function: txs, address_mode: implied, cycles: 2 },		//0x9a
+    Opcode{ name:"tas", function: tas, address_mode: absolute_y, cycles: 5 },		//0x9b
+    Opcode{ name:"shy", function: shy, address_mode: absolute_x, cycles: 5 },		//0x9c
+    Opcode{ name:"sta", function: sta, address_mode: absolute_x, cycles: 5 },		//0x9d
+    Opcode{ name:"shx", function: shx, address_mode: absolute_y, cycles: 5 },		//0x9e
+    Opcode{ name:"ahx", function: ahx, address_mode: absolute_y, cycles: 5 },		//0x9f
+    Opcode{ name:"ldy", function: ldy, address_mode: immediate, cycles: 2 },		//0xa0
+    Opcode{ name:"lda", function: lda, address_mode: indirect_x, cycles: 6 },		//0xa1
+    Opcode{ name:"ldx", function: ldx, address_mode: immediate, cycles: 2 },		//0xa2
+    Opcode{ name:"lax", function: lax, address_mode: indirect_x, cycles: 6 },		//0xa3
+    Opcode{ name:"ldy", function: ldy, address_mode: zero_page, cycles: 3 },		//0xa4
+    Opcode{ name:"lda", function: lda, address_mode: zero_page, cycles: 3 },		//0xa5
+    Opcode{ name:"ldx", function: ldx, address_mode: zero_page, cycles: 3 },		//0xa6
+    Opcode{ name:"lax", function: lax, address_mode: zero_page, cycles: 3 },		//0xa7
+    Opcode{ name:"tay", function: tay, address_mode: implied, cycles: 2 },		//0xa8
+    Opcode{ name:"lda", function: lda, address_mode: immediate, cycles: 2 },		//0xa9
+    Opcode{ name:"tax", function: tax, address_mode: implied, cycles: 2 },		//0xaa
+    Opcode{ name:"lax", function: lax, address_mode: immediate, cycles: 2 },		//0xab
+    Opcode{ name:"ldy", function: ldy, address_mode: absolute, cycles: 4 },		//0xac
+    Opcode{ name:"lda", function: lda, address_mode: absolute, cycles: 4 },		//0xad
+    Opcode{ name:"ldx", function: ldx, address_mode: absolute, cycles: 4 },		//0xae
+    Opcode{ name:"lax", function: lax, address_mode: absolute, cycles: 4 },		//0xaf
+    Opcode{ name:"bcs", function: bcs, address_mode: relative, cycles: 2 },		//0xb0
+    Opcode{ name:"lda", function: lda, address_mode: indirect_y, cycles: 5 },		//0xb1
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xb2
+    Opcode{ name:"lax", function: lax, address_mode: indirect_y, cycles: 5 },		//0xb3
+    Opcode{ name:"ldy", function: ldy, address_mode: zero_page_x, cycles: 4 },		//0xb4
+    Opcode{ name:"lda", function: lda, address_mode: zero_page_x, cycles: 4 },		//0xb5
+    Opcode{ name:"ldx", function: ldx, address_mode: zero_page_y, cycles: 4 },		//0xb6
+    Opcode{ name:"lax", function: lax, address_mode: zero_page_y, cycles: 4 },		//0xb7
+    Opcode{ name:"clv", function: clv, address_mode: implied, cycles: 2 },		//0xb8
+    Opcode{ name:"lda", function: lda, address_mode: absolute_y, cycles: 4 },		//0xb9
+    Opcode{ name:"tsx", function: tsx, address_mode: implied, cycles: 2 },		//0xba
+    Opcode{ name:"las", function: las, address_mode: absolute_y, cycles: 4 },		//0xbb
+    Opcode{ name:"ldy", function: ldy, address_mode: absolute_x, cycles: 4 },		//0xbc
+    Opcode{ name:"lda", function: lda, address_mode: absolute_x, cycles: 4 },		//0xbd
+    Opcode{ name:"ldx", function: ldx, address_mode: absolute_y, cycles: 4 },		//0xbe
+    Opcode{ name:"lax", function: lax, address_mode: absolute_y, cycles: 4 },		//0xbf
+    Opcode{ name:"cpy", function: cpy, address_mode: immediate, cycles: 2 },		//0xc0
+    Opcode{ name:"cmp", function: cmp, address_mode: indirect_x, cycles: 6 },		//0xc1
+    Opcode{ name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0xc2
+    Opcode{ name:"dcp", function: dcp, address_mode: indirect_x, cycles: 8 },		//0xc3
+    Opcode{ name:"cpy", function: cpy, address_mode: zero_page, cycles: 3 },		//0xc4
+    Opcode{ name:"cmp", function: cmp, address_mode: zero_page, cycles: 3 },		//0xc5
+    Opcode{ name:"dec", function: dec, address_mode: zero_page, cycles: 5 },		//0xc6
+    Opcode{ name:"dcp", function: dcp, address_mode: zero_page, cycles: 5 },		//0xc7
+    Opcode{ name:"iny", function: iny, address_mode: implied, cycles: 2 },		//0xc8
+    Opcode{ name:"cmp", function: cmp, address_mode: immediate, cycles: 2 },		//0xc9
+    Opcode{ name:"dex", function: dex, address_mode: implied, cycles: 2 },		//0xca
+    Opcode{ name:"axs", function: axs, address_mode: immediate, cycles: 2 },		//0xcb
+    Opcode{ name:"cpy", function: cpy, address_mode: absolute, cycles: 4 },		//0xcc
+    Opcode{ name:"cmp", function: cmp, address_mode: absolute, cycles: 4 },		//0xcd
+    Opcode{ name:"dec", function: dec, address_mode: absolute, cycles: 6 },		//0xce
+    Opcode{ name:"dcp", function: dcp, address_mode: absolute, cycles: 6 },		//0xcf
+    Opcode{ name:"bne", function: bne, address_mode: relative, cycles: 2 },		//0xd0
+    Opcode{ name:"cmp", function: cmp, address_mode: indirect_y, cycles: 5 },		//0xd1
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xd2
+    Opcode{ name:"dcp", function: dcp, address_mode: indirect_y, cycles: 8 },		//0xd3
+    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0xd4
+    Opcode{ name:"cmp", function: cmp, address_mode: zero_page_x, cycles: 4 },		//0xd5
+    Opcode{ name:"dec", function: dec, address_mode: zero_page_x, cycles: 6 },		//0xd6
+    Opcode{ name:"dcp", function: dcp, address_mode: zero_page_x, cycles: 6 },		//0xd7
+    Opcode{ name:"cld", function: cld, address_mode: implied, cycles: 2 },		//0xd8
+    Opcode{ name:"cmp", function: cmp, address_mode: absolute_y, cycles: 4 },		//0xd9
+    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xda
+    Opcode{ name:"dcp", function: dcp, address_mode: absolute_y, cycles: 7 },		//0xdb
+    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0xdc
+    Opcode{ name:"cmp", function: cmp, address_mode: absolute_x, cycles: 4 },		//0xdd
+    Opcode{ name:"dec", function: dec, address_mode: absolute_x, cycles: 7 },		//0xde
+    Opcode{ name:"dcp", function: dcp, address_mode: absolute_x, cycles: 7 },		//0xdf
+    Opcode{ name:"cpx", function: cpx, address_mode: immediate, cycles: 2 },		//0xe0
+    Opcode{ name:"sbc", function: sbc, address_mode: indirect_x, cycles: 6 },		//0xe1
+    Opcode{ name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0xe2
+    Opcode{ name:"isc", function: isc, address_mode: indirect_x, cycles: 8 },		//0xe3
+    Opcode{ name:"cpx", function: cpx, address_mode: zero_page, cycles: 3 },		//0xe4
+    Opcode{ name:"sbc", function: sbc, address_mode: zero_page, cycles: 3 },		//0xe5
+    Opcode{ name:"inc", function: inc, address_mode: zero_page, cycles: 5 },		//0xe6
+    Opcode{ name:"isc", function: isc, address_mode: zero_page, cycles: 5 },		//0xe7
+    Opcode{ name:"inx", function: inx, address_mode: implied, cycles: 2 },		//0xe8
+    Opcode{ name:"sbc", function: sbc, address_mode: immediate, cycles: 2 },		//0xe9
+    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xea
+    Opcode{ name:"sbc", function: sbc, address_mode: immediate, cycles: 2 },		//0xeb
+    Opcode{ name:"cpx", function: cpx, address_mode: absolute, cycles: 4 },		//0xec
+    Opcode{ name:"sbc", function: sbc, address_mode: absolute, cycles: 4 },		//0xed
+    Opcode{ name:"inc", function: inc, address_mode: absolute, cycles: 6 },		//0xee
+    Opcode{ name:"isc", function: isc, address_mode: absolute, cycles: 6 },		//0xef
+    Opcode{ name:"beq", function: beq, address_mode: relative, cycles: 2 },		//0xf0
+    Opcode{ name:"sbc", function: sbc, address_mode: indirect_y, cycles: 5 },		//0xf1
+    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xf2
+    Opcode{ name:"isc", function: isc, address_mode: indirect_y, cycles: 8 },		//0xf3
+    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0xf4
+    Opcode{ name:"sbc", function: sbc, address_mode: zero_page_x, cycles: 4 },		//0xf5
+    Opcode{ name:"inc", function: inc, address_mode: zero_page_x, cycles: 6 },		//0xf6
+    Opcode{ name:"isc", function: isc, address_mode: zero_page_x, cycles: 6 },		//0xf7
+    Opcode{ name:"sed", function: sed, address_mode: implied, cycles: 2 },		//0xf8
+    Opcode{ name:"sbc", function: sbc, address_mode: absolute_y, cycles: 4 },		//0xf9
+    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xfa
+    Opcode{ name:"isc", function: isc, address_mode: absolute_y, cycles: 7 },		//0xfb
+    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0xfc
+    Opcode{ name:"sbc", function: sbc, address_mode: absolute_x, cycles: 4 },		//0xfd
+    Opcode{ name:"inc", function: inc, address_mode: absolute_x, cycles: 7 },		//0xfe
+    Opcode{ name:"isc", function: isc, address_mode: absolute_x, cycles: 7 },		//0xff
 ];
 
 
@@ -372,7 +377,7 @@ fn asl(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
 
 ///BCC: Branch if the carry bit is clear
 fn bcc(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) -> u8{
-    return branch(cpu, cpu.get_flag(StatusFlag::Carry), address_mode_value)
+    return branch(cpu, !cpu.get_flag(StatusFlag::Carry), address_mode_value)
 }
 
 ///BCC: Branch if the carry bit is set
@@ -415,12 +420,12 @@ fn bpl(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: Addr
 
 ///BRK: Force an interrupt
 fn brk(cpu: &mut MOS6502, bus:&mut dyn Interface6502, _address_mode_value: AddressModeValue) -> u8{
-    cpu.program_counter += 1; //Increase program counter by 1 so it returns to the correct place
-    cpu.push_stack_16(bus,cpu.program_counter);
-    cpu.push_stack(bus,cpu.status_register);
+    //Increase program counter by 1 so it returns to the correct place
+    cpu.push_stack_16(bus,cpu.program_counter + 1);
     cpu.set_flag(StatusFlag::Break, true);
+    cpu.push_stack(bus,cpu.status_register);
     cpu.set_flag(StatusFlag::InterruptDisable, true);
-    cpu.program_counter = bus.read_16(super::IRQ_ADDRESS_LOCATION);
+    cpu.program_counter = super::read_16(bus, super::IRQ_ADDRESS_LOCATION);
     return 0;
 }
 
@@ -673,6 +678,7 @@ fn pha(cpu: &mut MOS6502, bus:&mut dyn Interface6502, _address_mode_value: Addre
 
 ///PHP: Push the value of the status byte onto the stack
 fn php(cpu: &mut MOS6502, bus:&mut dyn Interface6502, _address_mode_value: AddressModeValue) -> u8{
+    cpu.set_flag(StatusFlag::Break, true);
     cpu.push_stack(bus, cpu.status_register);
     return 0
 }
@@ -790,7 +796,6 @@ fn sbc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
         cpu.set_flag(StatusFlag::Zero, result as u8 == 0);
         //Set the Overflow flag if a signed overflow has occurred
         cpu.set_flag(StatusFlag::Overflow, (!(cpu.accumulator ^ value) & (cpu.accumulator ^ result as u8) & StatusFlag::Negative as u8) > 0);
-        println!("cpu.accumulator ^ value:0x{:2X}, cpu.accumulator ^ result:0x{:2X}", (cpu.accumulator ^ value), (cpu.accumulator ^ result as u8));
         //Negative flag is in bit 7, so it can be used to test if the result is negative, because a negative value will also have a 1 in bit 7
         cpu.set_flag(StatusFlag::Negative, result as u8 & StatusFlag::Negative as u8 > 0);
         cpu.accumulator = result as u8;
@@ -917,7 +922,6 @@ fn branch(cpu: &mut MOS6502, branch_condition: bool, address_mode_value: Address
             } else {
                 extra_cycles = 1;
             }
-
             cpu.program_counter = address;
         } else {
             extra_cycles = 0;
@@ -933,10 +937,9 @@ fn branch(cpu: &mut MOS6502, branch_condition: bool, address_mode_value: Address
 fn compare(cpu: &mut MOS6502, bus: &mut dyn Interface6502, register: u8, address_mode_value: AddressModeValue){
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value{
         let value = bus.read(address);
-        cpu.set_flag(StatusFlag::Carry, register >= value);
+        cpu.set_flag(StatusFlag::Carry, register > value || register == value);
         cpu.set_flag(StatusFlag::Zero, register == value);
         cpu.set_flag(StatusFlag::Negative, (register.wrapping_sub(value)) & StatusFlag::Negative as u8 > 0);
-        println!("{}", register.wrapping_sub(value))
     } else {
         panic!("Compare opcode called with invalid address mode!")
     }
@@ -1305,7 +1308,7 @@ mod test{
                 match _address {
                     0x01fd => assert_eq!(_data, 0x40),
                     0x01fc => assert_eq!(_data, 0x01),
-                    0x01fb => assert_eq!(_data, 0x81),
+                    0x01fb => assert_eq!(_data, 0x81 | StatusFlag::Break as u8),
                     _ => panic!("Unintended Address Accessed {:4X}", _address)
                 }
             },
@@ -2235,13 +2238,14 @@ mod test{
             read: |_address| {panic!{"Read function was called"}},
             write: |address, data| {
                 match address {
-                    0x01fd => assert_eq!(data, 0x00),
+                    0x01fd => assert_eq!(data, 0x00 | StatusFlag::Break as u8),
                     _ => panic!("Unintended Address Accessed: 0x{:X}", address)
                 }
             },
         };
 
-        let cpu_expected = MOS6502{stack_pointer: 0xfc,..cpu_initial.clone()};
+        let mut cpu_expected = MOS6502{stack_pointer: 0xfc,..cpu_initial.clone()};
+        cpu_expected.set_flag(StatusFlag::Break, true);
 
         php(&mut cpu_initial, &mut stub_bus, AddressModeValue::Implied);
 

@@ -7,7 +7,7 @@ import requests
 import re
 
 html = BeautifulSoup(requests.get("http://www.oxyron.de/html/opcodes02.html").text)
-template = "Opcode{{ function: {}, address_mode: {}, cycles: {} }},\t\t//{}"
+template = "Opcode{{ name:\"{0}\", function: {0}, address_mode: {1}, cycles: {2} }},\t\t//{3}"
 
 address_map = {"imm" : "immediate",
                "zp" : "zero_page",

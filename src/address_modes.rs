@@ -3,17 +3,18 @@
 //  number of extra cycles that may be required under specific circumstances (Typically crossing page boundaries)
 
 use super::{MOS6502, Interface6502};
+use std::fmt;
 
 ///Absolute: Address mode returning a 16-bit absolute address
 pub (crate) fn absolute(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (AddressModeValue, u8){
-    let address: u16 = bus.read_16(cpu.program_counter);
+    let address: u16 = super::read_16(bus, cpu.program_counter);
     cpu.program_counter += 2;
     return (AddressModeValue::AbsoluteAddress(address), 0);
 }
 
 ///Absolute X: Address mode returning a 16-bit absolute address offset by the x register
 pub (crate) fn absolute_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (AddressModeValue, u8){
-    let address: u16 = bus.read_16(cpu.program_counter);
+    let address: u16 = super::read_16(bus, cpu.program_counter);
     let offset_address: u16 = address + cpu.x_register as u16;
     let extra_cycles;
 
@@ -30,7 +31,7 @@ pub (crate) fn absolute_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (Ad
 
 ///Absolute Y: Address mode returning a 16-bit absolute address offset by the y register
 pub (crate) fn absolute_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (AddressModeValue, u8){
-    let address: u16 = bus.read_16(cpu.program_counter);
+    let address: u16 = super::read_16(bus, cpu.program_counter);
     let offset_address: u16 = address + cpu.y_register as u16;
     let extra_cycles;
 
@@ -60,14 +61,14 @@ pub (crate) fn implied(_cpu: &mut MOS6502, _bus: &mut dyn Interface6502) -> (Add
 
 ///Indirect: Address mode that reads from the given address to get the actual address
 pub (crate) fn indirect(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (AddressModeValue, u8){
-    let indirect_address = bus.read_16(cpu.program_counter);
+    let indirect_address = super::read_16(bus, cpu.program_counter);
     let address: u16;
 
     //Simulate bug at page edge
     if indirect_address & 0x00ff == 0x00ff{
         address = (bus.read(indirect_address & 0xff00) as u16) << 8 | bus.read(indirect_address) as u16;
     } else {
-        address = bus.read_16(indirect_address);
+        address = super::read_16(bus, indirect_address);
     }
 
     cpu.program_counter += 2;
@@ -77,7 +78,7 @@ pub (crate) fn indirect(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (Addr
 ///Indirect X: Address mode that reads from the 8-bit given address offset by x to get the actual address
 pub (crate) fn indirect_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (AddressModeValue, u8){
     let indirect_address = bus.read(cpu.program_counter);
-    let address = bus.read_16(indirect_address as u16  + cpu.x_register as u16);
+    let address = super::read_16(bus, indirect_address as u16  + cpu.x_register as u16);
 
     cpu.program_counter += 1;
     return (AddressModeValue::AbsoluteAddress(address), 0);
@@ -86,7 +87,7 @@ pub (crate) fn indirect_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (Ad
 ///Indirect Y: Address mode that reads from the 8-bit given address to get the actual address and then offsets it by y
 pub (crate) fn indirect_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (AddressModeValue, u8){
     let indirect_address = bus.read(cpu.program_counter);
-    let address= bus.read_16(indirect_address as u16);
+    let address= super::read_16(bus, indirect_address as u16);
     let offset_address = address + cpu.y_register as u16;
     let extra_cycles;
 
@@ -118,7 +119,7 @@ pub (crate) fn zero_page(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (Add
 ///Zero-page X: Address mode that uses an 8-bit address to access memory on the 0 page (0x00__), offset by x
 // TODO: Implement offset bug
 pub (crate) fn zero_page_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (AddressModeValue, u8){
-    let address = bus.read(cpu.program_counter) + cpu.x_register;
+    let address = bus.read(cpu.program_counter).wrapping_add(cpu.x_register);
     cpu.program_counter += 1;
     return(AddressModeValue::AbsoluteAddress(address as u16), 0)
 }
@@ -126,17 +127,27 @@ pub (crate) fn zero_page_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (A
 ///Zero-page Y: Address mode that uses an 8-bit address to access memory on the 0 page (0x00__), offset by y
 // TODO: Implement offset bug
 pub (crate) fn zero_page_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> (AddressModeValue, u8){
-    let address = bus.read(cpu.program_counter) + cpu.y_register;
+    let address = bus.read(cpu.program_counter).wrapping_add(cpu.y_register);
     cpu.program_counter += 1;
     return(AddressModeValue::AbsoluteAddress(address as u16), 0)
 }
 
 ///Enum for the return type of Address modes
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub (crate) enum AddressModeValue {
     Implied,
     RelativeAddress(u8),
     AbsoluteAddress(u16)
+}
+
+impl fmt::Debug for AddressModeValue{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AddressModeValue::Implied => write!(f, "Implied"),
+            AddressModeValue::RelativeAddress(address) => write!(f, "Relative Address: {:02X}", address),
+            AddressModeValue::AbsoluteAddress(address) => write!(f, "Absolute Address: {:04X}", address)
+        }
+    }
 }
 
 //TESTS---------------------------------------------------------------------------------------------
@@ -149,7 +160,7 @@ mod test{
 
     #[test]
     fn test_absolute(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{ 0xff },
                                    |address, data|{ panic!("Write function was called")});
 
@@ -163,7 +174,7 @@ mod test{
 
     #[test]
     fn test_absolute_x(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{ 0x00 },
                                    |address, data|{ panic!("Write function was called")});
         cpu.x_register = 2;
@@ -177,7 +188,7 @@ mod test{
 
     #[test]
     fn test_absolute_x_extra_cycle(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{ 0x10 },
                                    |address, data|{ panic!("Write function was called")});
         cpu.x_register = 255;
@@ -191,7 +202,7 @@ mod test{
 
     #[test]
     fn test_absolute_y(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{ 0x00 },
                                    |address, data|{ panic!("Write function was called")});
         cpu.y_register = 2;
@@ -205,7 +216,7 @@ mod test{
 
     #[test]
     fn test_absolute_y_extra_cycle(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{ 0x10 },
                                    |address, data|{ panic!("Write function was called")});
         cpu.y_register = 255;
@@ -219,7 +230,7 @@ mod test{
 
     #[test]
     fn test_immediate(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{ panic!("Read function was called")},
                                    |address, data|{ panic!("Write function was called")});
 
@@ -233,7 +244,7 @@ mod test{
 
     #[test]
     fn test_implied(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{ panic!("Read function was called")},
                                    |address, data|{ panic!("Write function was called")});
 
@@ -247,7 +258,7 @@ mod test{
 
     #[test]
     fn test_indirect(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{
             match address {
                 0x0000 => 0x11,
@@ -268,7 +279,7 @@ mod test{
 
     #[test]
     fn test_indirect_bug(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{
             match address {
                 0x0000 => 0xff,
@@ -289,7 +300,7 @@ mod test{
 
     #[test]
     fn test_indirect_x(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{
             match address {
                 0x0000 => 0x25,
@@ -310,7 +321,7 @@ mod test{
 
     #[test]
     fn test_indirect_y(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{
             match address {
                 0x0000 => 0x25,
@@ -331,7 +342,7 @@ mod test{
 
     #[test]
     fn test_indirect_y_extra_cycle(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{
             match address {
                 0x0000 => 0x25,
@@ -352,7 +363,7 @@ mod test{
 
     #[test]
     fn test_relative(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{ 0x10 },
                                    |address, data|{ panic!("Write function was called")});
 
@@ -366,7 +377,7 @@ mod test{
 
     #[test]
     fn test_zero_page(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{ 0x10 },
                                    |address, data|{ panic!("Write function was called")});
 
@@ -380,7 +391,7 @@ mod test{
 
     #[test]
     fn test_zero_page_x(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{ 0x10 },
                                    |address, data|{ panic!("Write function was called")});
 
@@ -395,7 +406,7 @@ mod test{
 
     #[test]
     fn test_zero_page_y(){
-        let mut cpu = MOS6502::new();
+        let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(|address|{ 0x10 },
                                    |address, data|{ panic!("Write function was called")});
 
