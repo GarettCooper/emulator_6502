@@ -3,8 +3,6 @@ Hello friends, prospective employers, and people who Googled "6502 emulator rust
 
 This is a general purpose Rust implementation of an [MOS 6502](https://en.wikipedia.org/wiki/MOS_Technology_6502) emulator, capable of executing code in isolation or as part of one of the many systems the 6502 was used in, including the Commodore 64, Apple II, and Nintendo Entertainment System. To do so, the library provides the Interface6502 trait which allows the client to implement its own functions for reading and writing to memory addresses.
 
-*The following samples use the current version of the emulator's public interface, which is still subject to change over the immediate future.*
-
 ### Defining an interface
 
 ```rust
@@ -39,13 +37,13 @@ For example, a NES implementation using this 6502 emulator would map reads and w
 
 ```rust
 
-fn main(){
+fn main() -> Result<()>{
   let mut ram = BasicRam{ ram: Box::new([0; u16::max_value() as usize + 1]) };
   
   //Load a program into memory...
   let mut file = File::open("C:/some_6502_program.bin")?;
   let mut buffer = Vec::new();
-  file.read_to_end(&mut buffer);
+  file.read_to_end(&mut buffer)?;
   
   //Copy it into the BasicRam
   ram.load_program(0x0400, &mut buffer);
@@ -54,6 +52,8 @@ fn main(){
   cpu.set_program_counter(0x0400); //Set the program counter to the first byte of the program in memory
   cpu.cycle(&mut ram); // The emulator can execute cycles individually, for systems that require precise timing...
   cpu.execute_instruction(&mut ram); // or instruction by instruction for a coarser approach
+  
+  Ok(())
 }
 
 ```
