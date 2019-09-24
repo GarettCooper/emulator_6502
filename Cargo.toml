@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Garett M Cooper <coopergarettm@gmail.com>"]
 edition = "2018"
 description = "Rust implementation of an MOS 6502 emulator, intended to be a talking point during the interview process for my Winter 2020 co-op placement."
+homepage = "https://github.com/GarettCooper/6502-emulator"
 repository = "https://github.com/GarettCooper/6502-emulator"
 readme = "README.md"
 keywords = ["emulator", "6502", "nes"]
