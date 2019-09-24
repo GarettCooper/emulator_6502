@@ -7,7 +7,7 @@ This is a general purpose Rust implementation of an [MOS 6502](https://en.wikipe
 
 ```rust
 
-struct BasicBus{
+struct BasicRam{
     ram: Box<[u8; u16::max_value() as usize + 1]> //The maximum address range of the 6502
 }
 
