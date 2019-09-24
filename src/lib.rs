@@ -5,7 +5,7 @@
 //!
 //!### Defining an interface
 //!
-//!```rust
+//!```rust,ignore
 //!
 //!struct BasicRam{
 //!    ram: Box<[u8; u16::max_value() as usize + 1]> //The maximum address range of the 6502
@@ -35,7 +35,7 @@
 //!
 //!### Running a program
 //!
-//!```rust
+//!```rust,ignore
 //!
 //!fn main() -> Result<()>{
 //!  let mut ram = BasicRam{ ram: Box::new([0; u16::max_value() as usize + 1]) };
@@ -96,7 +96,7 @@ const IRQ_ADDRESS_LOCATION: u16 = 0xfffe;
 ///Struct representation of the MOS 6502 processor
 ///
 /// ### Usage Example
-/// ```
+/// ```rust,ignore
 /// fn main() -> Result<()>{
 ///  let mut ram = BasicRam{ ram: Box::new([0; u16::max_value() as usize + 1]) };
 ///
@@ -286,7 +286,7 @@ fn write_16(bus: &mut dyn Interface6502, address: u16, data: u16){
 ///Trait for interfacing with the 6502
 ///
 /// ### Declaration Example
-/// ```
+/// ```rust,ignore
 /// struct BasicRam{
 ///    ram: Box<[u8; u16::max_value() as usize + 1]> //The maximum address range of the 6502
 ///}
