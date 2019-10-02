@@ -36,7 +36,7 @@ impl Interface6502 for BasicRam {
 fn load_test(ram: &mut BasicRam, file_name: &str) -> Result<()>{
     let root_dir = &var("CARGO_MANIFEST_DIR").expect("$CARGO_MANIFEST_DIR");
     let mut source_path = PathBuf::from(root_dir);
-    source_path.push("tests\\bins");
+    source_path.push("tests/bins");
     source_path.push(file_name);
 
     let mut file = File::open(source_path.clone())?;
