@@ -191,7 +191,7 @@ impl MOS6502 {
                 self.program_counter += 1;
                 let (address_mode_value, mut extra_cycles) = instruction.find_address(self, interface);
 
-                info!("0x{:04X} {} {:?}", log_program_counter, instruction.get_name(), address_mode_value);
+                trace!("0x{:04X} {} {:?}", log_program_counter, instruction.get_name(), address_mode_value);
 
                 extra_cycles += instruction.execute_instruction(self, interface, address_mode_value);
                 self.remaining_cycles += extra_cycles + instruction.get_cycles();
