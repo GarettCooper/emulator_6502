@@ -1,0 +1,36 @@
+language: rust
+script:
+  - cargo test --verbose
+  - cargo test --verbose --features binary_coded_decimal
+matrix:
+  include:
+    - rust: stable
+      name: "Windows, Stable"
+      os: windows
+
+    - rust: beta
+      name: "Windows, Beta"
+      os: windows
+
+    - rust: nightly
+      name: "Windows, Nightly"
+      os: windows
+
+    - rust: stable
+      name: "Linux, Stable"
+      os: linux
+
+    - rust: beta
+      name: "Linux, Beta"
+      os: linux
+
+    - rust: nightly
+      name: "Linux, Nightly"
+      os: linux
+
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
+cache:
+  cargo: true

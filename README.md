@@ -1,4 +1,9 @@
-# 6502-emulator
+# emulator_6502
+
+[![Build Status](https://travis-ci.com/GarettCooper/6502-emulator.svg)](https://travis-ci.com/GarettCooper/6502-emulator)
+[![Crate](https://img.shields.io/crates/v/emulator_6502.svg)](https://crates.io/crates/emulator_6502)
+[![Documentation](https://docs.rs/emulator_6502/badge.svg)](https://docs.rs/emulator_6502)
+
 Hello friends, prospective employers, and people who Googled "6502 emulator rust", you've found a small personal project I've been working on since early September of 2019 to use as a talking point during the interview process for my Winter 2020 co-op placement. The goal of the project is to demonstrate my ability to pick up a new programming language while developing a complex system. 
 
 This is a general purpose Rust implementation of an [MOS 6502](https://en.wikipedia.org/wiki/MOS_Technology_6502) emulator, capable of executing code in isolation or as part of one of the many systems the 6502 was used in, including the Commodore 64, Apple II, and Nintendo Entertainment System. To do so, the library provides the Interface6502 trait which allows the client to implement its own functions for reading and writing to memory addresses.
