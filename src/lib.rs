@@ -1,4 +1,4 @@
-//!# 6502-emulator
+//!# emulator_6502
 //!Hello friends, prospective employers, and people who Googled "6502 emulator rust", you've found a small personal project I've been working on since early September of 2019 to use as a talking point during the interview process for my Winter 2020 co-op placement. The goal of the project is to demonstrate my ability to pick up a new programming language while developing a complex system.
 //!
 //!This is a general purpose Rust implementation of an [MOS 6502](https://en.wikipedia.org/wiki/MOS_Technology_6502) emulator, capable of executing code in isolation or as part of one of the many systems the 6502 was used in, including the Commodore 64, Apple II, and Nintendo Entertainment System. To do so, the library provides the Interface6502 trait which allows the client to implement its own functions for reading and writing to memory addresses.
@@ -127,7 +127,7 @@ pub struct MOS6502 {
     stack_pointer: u8,
     status_register: u8,
     //Other
-    ///The number of cycles before the next opcode is run
+    /// The number of cycles before the next opcode is run
     remaining_cycles: u8,
     //Tracking Booleans
     pending_nmi: bool,
@@ -135,7 +135,7 @@ pub struct MOS6502 {
 }
 
 impl MOS6502 {
-    ///Creates a new MOS6502 emulation with the program counter at 0x0400
+    /// Creates a new MOS6502 emulation with the program counter at 0x0400
     pub fn new() -> Self {
         MOS6502 {
             accumulator: 0x00,
@@ -150,7 +150,7 @@ impl MOS6502 {
         }
     }
 
-    ///Creates a new MOS6502 emulation with the program counter at the provided start address
+    /// Creates a new MOS6502 emulation with the program counter at the provided start address
     pub fn new_start(start: u16) -> Self {
         return MOS6502 {
             program_counter: start,
@@ -158,12 +158,22 @@ impl MOS6502 {
         };
     }
 
-    ///Force the program counter to a specific address
+    /// Creates a new MOS6502 emulation with the program counter at the address read from the reset vector (0xfffa-0xfffb).
+    ///
+    /// This is the standard method used for determining where the program starts on most systems
+    pub fn new_reset_position(interface: &mut (dyn Interface6502)) -> Self {
+        return MOS6502 {
+            program_counter: read_16(interface, RESET_ADDRESS_LOCATION),
+            ..MOS6502::new()
+        };
+    }
+
+    /// Force the program counter to a specific address
     pub fn set_program_counter(&mut self, program_counter: u16) {
         self.program_counter = program_counter
     }
 
-    ///Runs a processor cycle, mutably borrows the reading and writing interface for the duration
+    /// Runs a processor cycle, mutably borrows the reading and writing interface for the duration
     pub fn cycle(&mut self, interface: &mut (dyn Interface6502)) {
         if self.remaining_cycles == 0 {
             if self.pending_nmi || (self.pending_irq && !self.get_flag(StatusFlag::InterruptDisable)) {
@@ -200,7 +210,7 @@ impl MOS6502 {
         self.remaining_cycles -= 1;
     }
 
-    ///Runs as many processor cycles as it takes to complete the instruction at the program counter
+    /// Runs as many processor cycles as it takes to complete the instruction at the program counter
     pub fn execute_instruction(&mut self, interface: &mut (dyn Interface6502)) {
         self.cycle(interface); //No do-while loops in Rust
         while self.remaining_cycles != 0 {
@@ -208,32 +218,32 @@ impl MOS6502 {
         }
     }
 
-    ///Pushes a byte onto the stack
+    /// Pushes a byte onto the stack
     fn push_stack(&mut self, interface: &mut dyn Interface6502, data: u8) {
         interface.write(STACK_PAGE + u16::from(self.stack_pointer), data);
         self.stack_pointer = self.stack_pointer.wrapping_sub(1);
     }
 
-    ///Pushes two bytes onto the stack
+    /// Pushes two bytes onto the stack
     fn push_stack_16(&mut self, interface: &mut dyn Interface6502, data: u16) {
         self.push_stack(interface, (data >> 8) as u8);
         self.push_stack(interface, data as u8);
     }
 
-    ///Pops a byte from the stack
+    /// Pops a byte from the stack
     fn pop_stack(&mut self, interface: &mut dyn Interface6502) -> u8 {
         self.stack_pointer = self.stack_pointer.wrapping_add(1);
         interface.read(STACK_PAGE + u16::from(self.stack_pointer))
     }
 
-    ///Pops two bytes from the stack
+    /// Pops two bytes from the stack
     fn pop_stack_16(&mut self, interface: &mut dyn Interface6502) -> u16 {
         let lo = u16::from(self.pop_stack(interface));
         let hi = u16::from(self.pop_stack(interface));
         return (hi << 8) | lo;
     }
 
-    ///Sets a status flag to the given boolean value
+    /// Sets a status flag to the given boolean value
     fn set_flag(&mut self, flag: StatusFlag, value: bool) {
         //Clear flag
         self.status_register &= !(flag as u8);
@@ -243,22 +253,22 @@ impl MOS6502 {
         }
     }
 
-    ///Returns the value of a flag in the status register as a boolean
+    /// Returns the value of a flag in the status register as a boolean
     fn get_flag(&self, flag: StatusFlag) -> bool {
         return (self.status_register & flag as u8) > 0;
     }
 
-    ///Request that an interrupt occurs after the current instruction completes
+    /// Request that an interrupt occurs after the current instruction completes
     pub fn interrupt_request(&mut self) {
         self.pending_irq = true;
     }
 
-    ///Request that an interrupt occurs after the current instruction completes, even if the interrupt disabled flag is set
+    /// Request that an interrupt occurs after the current instruction completes, even if the interrupt disabled flag is set
     pub fn non_maskable_interrupt_request(&mut self) {
         self.pending_nmi = true;
     }
 
-    ///Resets the 6502 to a known state
+    /// Resets the 6502 to a known state
     pub fn reset(&mut self, interface: &mut dyn Interface6502) {
         self.program_counter = read_16(interface, RESET_ADDRESS_LOCATION);
 
@@ -272,14 +282,14 @@ impl MOS6502 {
     }
 }
 
-///Wrapper function for reading 16 bits at a time
+/// Wrapper function for reading 16 bits at a time
 fn read_16(bus: &mut dyn Interface6502, address: u16) -> u16 {
     let lo = u16::from(bus.read(address));
     let hi = u16::from(bus.read(address + 1));
     return (hi << 8) | lo;
 }
 
-///Wrapper function for writing 16 bits at a time
+/// Wrapper function for writing 16 bits at a time
 fn write_16(bus: &mut dyn Interface6502, address: u16, data: u16) {
     bus.write(address, data as u8);
     bus.write(address + 1, (data >> 8) as u8);
