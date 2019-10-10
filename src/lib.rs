@@ -83,7 +83,7 @@ use std::u8;
 
 //Declare some type alias for clarity's sake
 type AddressModeFunction = fn(&mut MOS6502, &mut dyn Interface6502) -> (address_modes::AddressModeValue, u8);
-type OpcodeFunction = fn(&mut MOS6502, &mut dyn Interface6502, AddressModeValue) -> u8;
+type OpcodeFunction = fn(&mut MOS6502, &mut dyn Interface6502, AddressModeValue);
 
 ///The value that will be added to the stack pointer
 const STACK_PAGE: u16 = 0x0100;
@@ -193,7 +193,7 @@ impl MOS6502 {
 
                 trace!("0x{:04X} {} {:?}", log_program_counter, instruction.get_name(), address_mode_value);
 
-                extra_cycles += instruction.execute_instruction(self, interface, address_mode_value);
+                instruction.execute_instruction(self, interface, address_mode_value);
                 self.remaining_cycles += extra_cycles + instruction.get_cycles();
             }
         }
@@ -334,24 +334,40 @@ impl Default for MOS6502 {
 
 #[cfg(test)]
 pub(crate) struct StubInterface6502 {
-    read: fn(u16) -> u8,
-    write: fn(u16, u8),
+    read: fn(u16, u8) -> u8,
+    read_count: u8,
+    write: fn(u16, u8, u8),
+    write_count: u8,
 }
 
 #[cfg(test)]
 impl StubInterface6502 {
-    pub(crate) fn new(read_fn: fn(u16) -> u8, write_fn: fn(u16, u8)) -> Self {
-        StubInterface6502 { read: read_fn, write: write_fn }
+    pub(crate) fn new(read_fn: fn(u16, u8) -> u8, write_fn: fn(u16, u8, u8)) -> Self {
+        StubInterface6502 { read: read_fn, write: write_fn, read_count: 0, write_count: 0 }
     }
 }
 
 #[cfg(test)]
 impl Interface6502 for StubInterface6502 {
     fn read(&mut self, address: u16) -> u8 {
-        (self.read)(address)
+        self.read_count += 1;
+        (self.read)(address, self.read_count)
     }
 
     fn write(&mut self, address: u16, data: u8) {
-        (self.write)(address, data)
+        self.write_count += 1;
+        (self.write)(address, data, self.read_count)
+    }
+}
+
+#[cfg(test)]
+impl Default for StubInterface6502{
+    fn default() -> Self {
+        StubInterface6502::new(|address, read_count| {
+            panic!("Read Function was not initialized")
+        },
+        |address, data, write_count| {
+            panic!("Write Function was not initialized")
+        })
     }
 }
