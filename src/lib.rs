@@ -66,9 +66,10 @@
 //!* Full implementation of documented instruction set
 //!* Emulation of bugs that existed in the original 6502 hardware
 //!* Binary Coded Decimal when the "binary_coded_decimal" compilation feature is enabled
-//!* ... hopefully more if I get around to it
+//!* Illegal undocumented opcodes when the "illegal_opcodes" compilation feature is enabled
 //!
-//!Currently undocumented instructions are implemented as placeholder functions which cause the emulator to panic when called.
+//!If illegal opcodes are called without the "illegal_opcodes" compilation feature enabled, the emulator will log a warning
+//!and run for the appropriate number of cycles without changing state.
 
 #![allow(clippy::needless_return)] // My preferred style
 
