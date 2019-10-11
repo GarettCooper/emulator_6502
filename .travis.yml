@@ -1,7 +1,7 @@
 language: rust
 script:
   - cargo test --verbose
-  - cargo test --verbose --features binary_coded_decimal
+  - cargo test --verbose --features illegal_opcodes, binary_coded_decimal
 matrix:
   include:
     - rust: stable

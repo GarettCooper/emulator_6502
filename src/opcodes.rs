@@ -34,6 +34,7 @@ impl Opcode<'_> {
     }
 }
 
+//TODO: Replace this with a macro-generated match statement so that it can be better evaluated at compile time
 pub (super) static OPCODE_TABLE: [Opcode; 256] = [
     Opcode{ name:"brk", function: brk, address_mode: implied, cycles: 7 },		//0x0
     Opcode{ name:"ora", function: ora, address_mode: indirect_x, cycles: 6 },		//0x1
@@ -602,10 +603,11 @@ fn ldy(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
 fn lsr(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     //Wrapped local function to handle both cases
     fn lsr_wrapped(cpu: &mut MOS6502, value: u8) -> u8 {
-        //Store the 7th bit in the carry bit
+        //Store the 0th bit in the carry bit
         cpu.set_flag(StatusFlag::Carry, value & 1 == 1);
         let shifted_value = value >> 1;
         cpu.set_flag(StatusFlag::Zero, shifted_value == 0);
+        cpu.set_flag(StatusFlag::Negative, false); //The result can never have bit 7 set
         return shifted_value;
     }
 
@@ -760,7 +762,7 @@ fn sbc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
         cpu.set_flag(StatusFlag::Negative, result as u8 & StatusFlag::Negative as u8 > 0);
         cpu.accumulator = result as u8;
     } else {
-        panic!("ADC opcode called with invalid address mode!")
+        panic!("SBC opcode called with invalid address mode!")
     }
 }
 
@@ -875,13 +877,15 @@ fn branch(cpu: &mut MOS6502, branch_condition: bool, address_mode_value: Address
     }
 }
 
-///General purpose function for compare opcodes
-fn compare(cpu: &mut MOS6502, bus: &mut dyn Interface6502, register: u8, address_mode_value: AddressModeValue) {
+///General purpose function for comparison opcodes
+fn compare(cpu: &mut MOS6502, bus: &mut dyn Interface6502, register: u8, address_mode_value: AddressModeValue) -> u8 {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         let value = bus.read(address);
         cpu.set_flag(StatusFlag::Carry, register >= value);
         cpu.set_flag(StatusFlag::Zero, register == value);
-        cpu.set_flag(StatusFlag::Negative, (register.wrapping_sub(value)) & StatusFlag::Negative as u8 > 0);
+        let register = register.wrapping_sub(value);
+        cpu.set_flag(StatusFlag::Negative, register & StatusFlag::Negative as u8 > 0);
+        return  register;
     } else {
         panic!("Compare opcode called with invalid address mode!")
     }
