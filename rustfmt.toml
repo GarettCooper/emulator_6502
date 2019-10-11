@@ -1,0 +1,3 @@
+max_width = 175
+newline_style = "Unix"
+struct_lit_single_line = true
