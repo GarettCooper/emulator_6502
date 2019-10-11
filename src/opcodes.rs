@@ -25,7 +25,7 @@ impl Opcode<'_> {
         (self.function)(cpu, interface, address_mode_value);
     }
 
-    pub(super) fn find_address(&self, cpu: &mut MOS6502, interface: &mut dyn Interface6502) -> (AddressModeValue, u8) {
+    pub(super) fn find_address(&self, cpu: &mut MOS6502, interface: &mut dyn Interface6502) -> AddressModeValue {
         return (self.address_mode)(cpu, interface);
     }
 

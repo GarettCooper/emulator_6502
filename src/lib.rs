@@ -82,7 +82,7 @@ use address_modes::*;
 use std::u8;
 
 //Declare some type alias for clarity's sake
-type AddressModeFunction = fn(&mut MOS6502, &mut dyn Interface6502) -> (address_modes::AddressModeValue, u8);
+type AddressModeFunction = fn(&mut MOS6502, &mut dyn Interface6502) -> AddressModeValue;
 type OpcodeFunction = fn(&mut MOS6502, &mut dyn Interface6502, AddressModeValue);
 
 ///The value that will be added to the stack pointer
@@ -199,12 +199,12 @@ impl MOS6502 {
                 let instruction = opcodes::OPCODE_TABLE[interface.read(self.program_counter) as usize];
                 let log_program_counter = self.program_counter;
                 self.program_counter += 1;
-                let (address_mode_value, mut extra_cycles) = instruction.find_address(self, interface);
+                let address_mode_value = instruction.find_address(self, interface);
 
                 trace!("0x{:04X} {} {:?}", log_program_counter, instruction.get_name(), address_mode_value);
 
                 instruction.execute_instruction(self, interface, address_mode_value);
-                self.remaining_cycles += extra_cycles + instruction.get_cycles();
+                self.remaining_cycles += instruction.get_cycles();
             }
         }
         self.remaining_cycles -= 1;
