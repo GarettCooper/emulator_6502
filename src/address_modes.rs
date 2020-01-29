@@ -151,7 +151,7 @@ impl fmt::Debug for AddressModeValue {
 #[cfg(test)]
 mod test {
     #![allow(unused_variables, unused_mut)] //Allow some warnings for test code
-    use super::super::StubInterface6502;
+    use crate::test_utilities::StubInterface6502;
     use super::*;
 
     #[test]

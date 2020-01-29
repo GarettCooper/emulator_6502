@@ -897,10 +897,10 @@ fn compare(cpu: &mut MOS6502, bus: &mut dyn Interface6502, register: u8, address
 mod test {
     #![allow(unused_variables, unused_mut)] //Allow some warnings for test code
 
-    use super::super::address_modes::AddressModeValue;
-    use super::super::StubInterface6502;
     use super::*;
-    use super::{StatusFlag, MOS6502};
+    use crate::{StatusFlag, MOS6502};
+    use crate::address_modes::AddressModeValue;
+    use crate::test_utilities::StubInterface6502;
 
     #[test]
     fn test_adc() {
