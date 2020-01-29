@@ -231,9 +231,10 @@ pub(super) fn kil(_cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mod
 mod test {
     #![allow(unused_variables, unused_mut)] //Allow some warnings for test code
 
-    use crate::{Interface6502, MOS6502, StubInterface6502};
-    use crate::address_modes::AddressModeValue;
     use super::*;
+    use crate::{Interface6502, MOS6502};
+    use crate::address_modes::AddressModeValue;
+    use crate::test_utilities::StubInterface6502;
 
     #[test]
     fn test_slo(){
