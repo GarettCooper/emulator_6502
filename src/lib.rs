@@ -120,18 +120,26 @@ const IRQ_ADDRESS_LOCATION: u16 = 0xfffe;
 /// ```
 #[derive(Debug, PartialEq, Clone)]
 pub struct MOS6502 {
-    //Registers
+    // Registers
+    /// The accumulator register of the 6502, where the results of arithmetic opcodes are placed
     accumulator: u8,
+    /// The x register of the 6502
     x_register: u8,
+    /// The y register of the 6502
     y_register: u8,
+    /// Pointer to the instruction that will be executed next
     program_counter: u16,
+    /// Pointer to the top of the stack
     stack_pointer: u8,
+    /// Register holding the 6502's status flags
     status_register: u8,
-    //Other
+    // Other
     /// The number of cycles before the next opcode is run
     remaining_cycles: u8,
-    //Tracking Booleans
+    // Tracking Booleans
+    /// Boolean tracking whether or not a non-maskable interrupt request has been made
     pending_nmi: bool,
+    /// Boolean tracking whether or not an interrupt request has been made
     pending_irq: bool,
 }
 
