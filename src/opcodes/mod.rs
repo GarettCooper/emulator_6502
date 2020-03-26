@@ -647,8 +647,9 @@ fn pha(cpu: &mut MOS6502, bus: &mut dyn Interface6502, _address_mode_value: Addr
 
 ///PHP: Push the value of the status byte onto the stack
 fn php(cpu: &mut MOS6502, bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
-    cpu.set_flag(StatusFlag::Break, true);
-    cpu.push_stack(bus, cpu.status_register);
+    let status = cpu.status_register;
+    // PHP sets both Break flags, but only to the version of the flags pushed onto the stack
+    cpu.push_stack(bus, status | StatusFlag::Break as u8);
 }
 
 ///PLA: Sets the accumulator to a value popped off the top of the stack
@@ -660,7 +661,9 @@ fn pla(cpu: &mut MOS6502, bus: &mut dyn Interface6502, _address_mode_value: Addr
 
 ///PLP: Sets the status byte to a value popped off the top of the stack
 fn plp(cpu: &mut MOS6502, bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
-    cpu.status_register = cpu.pop_stack(bus);
+    let status = cpu.pop_stack(bus);
+    // Set all the flags except the Break flags, which remain as they were
+    cpu.status_register = (cpu.status_register & (StatusFlag::Break as u8)) | (status & !(StatusFlag::Break as u8));
 }
 
 ///ROL: Rotate the bits of the given value to the left
@@ -714,8 +717,9 @@ fn ror(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
 }
 
 ///RTI: Returns from an interrupt, reversing the operations performed by the BRK instruction
-fn rti(cpu: &mut MOS6502, bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
-    cpu.status_register = cpu.pop_stack(bus);
+fn rti(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
+    // Reuse other paths
+    plp(cpu, bus, address_mode_value);
     cpu.program_counter = cpu.pop_stack_16(bus);
 }
 
@@ -2330,7 +2334,7 @@ mod test {
             stack_pointer: 0xfc,
             ..cpu_initial.clone()
         };
-        cpu_expected.set_flag(StatusFlag::Break, true);
+        //cpu_expected.set_flag(StatusFlag::Break, true);
 
         php(&mut cpu_initial, &mut stub_bus, AddressModeValue::Implied);
 
@@ -2379,13 +2383,13 @@ mod test {
             y_register: 0x00,
             program_counter: 0x0000,
             stack_pointer: 0xfc,
-            status_register: 0x00,
+            status_register: 0x24,
             ..Default::default()
         };
 
         let mut stub_bus = StubInterface6502 {
             read: |address, read_count| match address {
-                0x01fd => 0x81,
+                0x01fd => 0xb1,
                 _ => panic!("Unintended Address Accessed: 0x{:X}", address),
             },
             write: |address, data, write_count| {
@@ -2394,7 +2398,7 @@ mod test {
         };
 
         let cpu_expected = MOS6502 {
-            status_register: 0x81,
+            status_register: 0xa1,
             stack_pointer: 0xfd,
             ..cpu_initial.clone()
         };
@@ -2544,13 +2548,13 @@ mod test {
             y_register: 0x00,
             program_counter: 0x0000,
             stack_pointer: 0xfa,
-            status_register: 0x00,
+            status_register: 0x20,
             ..Default::default()
         };
 
         let mut stub_bus = StubInterface6502 {
             read: |address, read_count| match address {
-                0x01fb => 0xe1,
+                0x01fb => 0xf1,
                 0x01fc => 0x01,
                 0x01fd => 0x40,
                 _ => panic!("Unintended Address Accessed: {:4X}", address),
