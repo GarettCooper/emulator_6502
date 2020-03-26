@@ -154,7 +154,7 @@ impl MOS6502 {
             y_register: 0x00,
             program_counter: 0x0400,
             stack_pointer: 0xFD,
-            status_register: 0x34,
+            status_register: 0x24,
             remaining_cycles: 0,
             pending_nmi: false,
             pending_irq: false,
