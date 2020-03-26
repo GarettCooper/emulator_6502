@@ -386,8 +386,8 @@ fn beq(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: Addr
 ///BIT: Uses the accumulator as a mask pattern to test the bits of a given memory location
 fn bit(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
-        let value = cpu.accumulator & bus.read(address);
-        cpu.set_flag(StatusFlag::Zero, value == 0);
+        let value = bus.read(address);
+        cpu.set_flag(StatusFlag::Zero, cpu.accumulator & value == 0);
         cpu.set_flag(StatusFlag::Overflow, value & StatusFlag::Overflow as u8 > 0);
         cpu.set_flag(StatusFlag::Negative, value & StatusFlag::Negative as u8 > 0);
     } else {
@@ -1386,7 +1386,7 @@ mod test {
     #[test]
     fn test_bit_negative_overflow_flags() {
         let mut cpu_initial = MOS6502 {
-            accumulator: 0xff,
+            accumulator: 0x0f,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x000a,
@@ -1406,6 +1406,7 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        cpu_expected.set_flag(StatusFlag::Zero, true);
         cpu_expected.set_flag(StatusFlag::Negative, true);
         cpu_expected.set_flag(StatusFlag::Overflow, true);
 
