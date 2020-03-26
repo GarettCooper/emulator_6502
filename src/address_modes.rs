@@ -31,7 +31,7 @@ pub(crate) fn absolute_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
 ///Absolute Y: Address mode returning a 16-bit absolute address offset by the y register
 pub(crate) fn absolute_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let address: u16 = super::read_16(bus, cpu.program_counter);
-    let offset_address: u16 = address + u16::from(cpu.y_register);
+    let offset_address: u16 = address.wrapping_add(u16::from(cpu.y_register));
 
     cpu.remaining_cycles += if (offset_address) & 0xff00 != address & 0xff00 {
         //Offset crossed a page boundary, any opcode using this address mode will take an extra cycle
@@ -45,7 +45,7 @@ pub(crate) fn absolute_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
 }
 
 ///Immediate: Address mode using next byte as value
-pub(crate) fn immediate(cpu: &mut MOS6502, _bus: &mut dyn Interface6502) -> AddressModeValue {
+pub(crate) fn immediate(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     //Return the current location of the program counter
     let address = cpu.program_counter;
     cpu.program_counter += 1;
@@ -61,12 +61,9 @@ pub(crate) fn implied(_cpu: &mut MOS6502, _bus: &mut dyn Interface6502) -> Addre
 pub(crate) fn indirect(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let indirect_address = super::read_16(bus, cpu.program_counter);
 
-    //Simulate bug at page edge
-    let address = if indirect_address & 0x00ff == 0x00ff {
-        u16::from(bus.read(indirect_address & 0xff00)) << 8 | u16::from(bus.read(indirect_address))
-    } else {
-        super::read_16(bus, indirect_address)
-    };
+    // Simulate bug at page edge
+    let page = indirect_address & 0xff00;
+    let address =  (u16::from(bus.read(page | ((indirect_address + 1) & 0xff))) <<  8) | u16::from(bus.read(indirect_address));
 
     cpu.program_counter += 2;
     return AddressModeValue::AbsoluteAddress(address);
@@ -75,7 +72,10 @@ pub(crate) fn indirect(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addres
 ///Indirect X: Address mode that reads from the 8-bit given address offset by x to get the actual address
 pub(crate) fn indirect_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let indirect_address = bus.read(cpu.program_counter);
-    let address = super::read_16(bus, u16::from(indirect_address) + u16::from(cpu.x_register));
+
+    // Simulate bug at page edge
+    let address = ((bus.read(indirect_address.wrapping_add(cpu.x_register).wrapping_add(1) as u16) as u16) << 8 ) |
+        bus.read(indirect_address.wrapping_add(cpu.x_register) as u16) as u16;
 
     cpu.program_counter += 1;
     return AddressModeValue::AbsoluteAddress(address);
@@ -84,8 +84,10 @@ pub(crate) fn indirect_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
 ///Indirect Y: Address mode that reads from the 8-bit given address to get the actual address and then offsets it by y
 pub(crate) fn indirect_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let indirect_address = bus.read(cpu.program_counter);
-    let address = super::read_16(bus, u16::from(indirect_address));
-    let offset_address = address + u16::from(cpu.y_register);
+    // Simulate bug at page edge
+    let address = ((bus.read(indirect_address.wrapping_add(1) as u16) as u16) << 8 ) |
+        bus.read(indirect_address as u16) as u16;
+    let offset_address = address.wrapping_add(u16::from(cpu.y_register));
 
     cpu.remaining_cycles += if (offset_address) & 0xff00 != address & 0xff00 {
         //Offset crossed a page boundary, any opcode using this address mode will take an extra cycle
@@ -268,7 +270,7 @@ mod test {
     }
 
     #[test]
-    fn test_indirect_bug() {
+    fn test_indirect_page_edge() {
         let mut cpu = MOS6502::new_start(0x0000);
         let mut bus = StubInterface6502::new(
             |address, read_count| match address {
@@ -307,6 +309,27 @@ mod test {
         let address_mode_value = indirect_x(&mut cpu, &mut bus);
 
         assert_eq!(address_mode_value, AddressModeValue::AbsoluteAddress(0xa701));
+        assert_eq!(cpu.remaining_cycles, 0);
+        assert_eq!(expected_program_counter, cpu.program_counter)
+    }
+
+    #[test]
+    fn test_indirect_x_page_edge() {
+        let mut cpu = MOS6502::new_start(0x0000);
+        let mut bus = StubInterface6502::new(
+            |address, read_count| match address {
+                0x0000 => 0xfe,
+                0x00ff => 0x01,
+                _ => 0x00,
+            },
+            |address, data, write_count| panic!("Write function was called"),
+        );
+
+        cpu.x_register = 0x1;
+        let expected_program_counter = cpu.program_counter + 1;
+        let address_mode_value = indirect_x(&mut cpu, &mut bus);
+
+        assert_eq!(address_mode_value, AddressModeValue::AbsoluteAddress(0xfe01));
         assert_eq!(cpu.remaining_cycles, 0);
         assert_eq!(expected_program_counter, cpu.program_counter)
     }
@@ -352,6 +375,28 @@ mod test {
 
         assert_eq!(address_mode_value, AddressModeValue::AbsoluteAddress(0xa80f));
         assert_eq!(cpu.remaining_cycles, 1);
+        assert_eq!(expected_program_counter, cpu.program_counter)
+    }
+
+    #[test]
+    fn test_indirect_y_page_edge() {
+        let mut cpu = MOS6502::new_start(0x0000);
+        let mut bus = StubInterface6502::new(
+            |address, read_count| match address {
+                0x0000 => 0xff,
+                0x00ff => 0x0a,
+                0x0026 => 0xa7,
+                _ => 0x00,
+            },
+            |address, data, write_count| panic!("Write function was called"),
+        );
+
+        cpu.y_register = 0x10;
+        let expected_program_counter = cpu.program_counter + 1;
+        let address_mode_value = indirect_y(&mut cpu, &mut bus);
+
+        assert_eq!(address_mode_value, AddressModeValue::AbsoluteAddress(0xff1a));
+        assert_eq!(cpu.remaining_cycles, 0);
         assert_eq!(expected_program_counter, cpu.program_counter)
     }
 
