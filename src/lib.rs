@@ -189,8 +189,7 @@ impl MOS6502 {
         if self.remaining_cycles == 0 {
             if self.pending_nmi || (self.pending_irq && !self.get_flag(StatusFlag::InterruptDisable)) {
                 //An interrupt will let the executing instruction complete
-                //Increase program counter by 1 so it returns to the correct place
-                self.push_stack_16(interface, self.program_counter + 1);
+                self.push_stack_16(interface, self.program_counter);
                 self.set_flag(StatusFlag::BreakIrq, true);
                 self.push_stack(interface, self.status_register);
                 self.set_flag(StatusFlag::InterruptDisable, true);
