@@ -28,6 +28,17 @@ pub(crate) fn absolute_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
     return AddressModeValue::AbsoluteAddress(offset_address);
 }
 
+///Absolute X: Address mode returning a 16-bit absolute address offset by the x register. This extra
+/// mode accounts for the special case where the instruction takes the same number of cycles regardless
+/// of crossing a page boundary.
+pub(crate) fn absolute_x_const(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
+    let address: u16 = super::read_16(bus, cpu.program_counter);
+    let offset_address: u16 = address + u16::from(cpu.x_register);
+
+    cpu.program_counter += 2;
+    return AddressModeValue::AbsoluteAddress(offset_address);
+}
+
 ///Absolute Y: Address mode returning a 16-bit absolute address offset by the y register
 pub(crate) fn absolute_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let address: u16 = super::read_16(bus, cpu.program_counter);
@@ -44,8 +55,19 @@ pub(crate) fn absolute_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
     return AddressModeValue::AbsoluteAddress(offset_address);
 }
 
+///Absolute Y: Address mode returning a 16-bit absolute address offset by the y register. This extra
+/// mode accounts for the special case where the instruction takes the same number of cycles regardless
+/// of crossing a page boundary.
+pub(crate) fn absolute_y_const(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
+    let address: u16 = super::read_16(bus, cpu.program_counter);
+    let offset_address: u16 = address.wrapping_add(u16::from(cpu.y_register));
+
+    cpu.program_counter += 2;
+    return AddressModeValue::AbsoluteAddress(offset_address);
+}
+
 ///Immediate: Address mode using next byte as value
-pub(crate) fn immediate(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
+pub(crate) fn immediate(cpu: &mut MOS6502, _bus: &mut dyn Interface6502) -> AddressModeValue {
     //Return the current location of the program counter
     let address = cpu.program_counter;
     cpu.program_counter += 1;

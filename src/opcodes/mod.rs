@@ -66,7 +66,7 @@ pub (super) static OPCODE_TABLE: [Opcode; 256] = [
     Opcode{ name:"slo", function: slo, address_mode: absolute_y, cycles: 7 },		//0x1b
     Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x1c
     Opcode{ name:"ora", function: ora, address_mode: absolute_x, cycles: 4 },		//0x1d
-    Opcode{ name:"asl", function: asl, address_mode: absolute_x, cycles: 7 },		//0x1e
+    Opcode{ name:"asl", function: asl, address_mode: absolute_x_const, cycles: 7 },		//0x1e
     Opcode{ name:"slo", function: slo, address_mode: absolute_x, cycles: 7 },		//0x1f
     Opcode{ name:"jsr", function: jsr, address_mode: absolute, cycles: 6 },		//0x20
     Opcode{ name:"and", function: and, address_mode: indirect_x, cycles: 6 },		//0x21
@@ -98,7 +98,7 @@ pub (super) static OPCODE_TABLE: [Opcode; 256] = [
     Opcode{ name:"rla", function: rla, address_mode: absolute_y, cycles: 7 },		//0x3b
     Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x3c
     Opcode{ name:"and", function: and, address_mode: absolute_x, cycles: 4 },		//0x3d
-    Opcode{ name:"rol", function: rol, address_mode: absolute_x, cycles: 7 },		//0x3e
+    Opcode{ name:"rol", function: rol, address_mode: absolute_x_const, cycles: 7 },		//0x3e
     Opcode{ name:"rla", function: rla, address_mode: absolute_x, cycles: 7 },		//0x3f
     Opcode{ name:"rti", function: rti, address_mode: implied, cycles: 6 },		//0x40
     Opcode{ name:"eor", function: eor, address_mode: indirect_x, cycles: 6 },		//0x41
@@ -130,7 +130,7 @@ pub (super) static OPCODE_TABLE: [Opcode; 256] = [
     Opcode{ name:"sre", function: sre, address_mode: absolute_y, cycles: 7 },		//0x5b
     Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x5c
     Opcode{ name:"eor", function: eor, address_mode: absolute_x, cycles: 4 },		//0x5d
-    Opcode{ name:"lsr", function: lsr, address_mode: absolute_x, cycles: 7 },		//0x5e
+    Opcode{ name:"lsr", function: lsr, address_mode: absolute_x_const, cycles: 7 },		//0x5e
     Opcode{ name:"sre", function: sre, address_mode: absolute_x, cycles: 7 },		//0x5f
     Opcode{ name:"rts", function: rts, address_mode: implied, cycles: 6 },		//0x60
     Opcode{ name:"adc", function: adc, address_mode: indirect_x, cycles: 6 },		//0x61
@@ -162,7 +162,7 @@ pub (super) static OPCODE_TABLE: [Opcode; 256] = [
     Opcode{ name:"rra", function: rra, address_mode: absolute_y, cycles: 7 },		//0x7b
     Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x7c
     Opcode{ name:"adc", function: adc, address_mode: absolute_x, cycles: 4 },		//0x7d
-    Opcode{ name:"ror", function: ror, address_mode: absolute_x, cycles: 7 },		//0x7e
+    Opcode{ name:"ror", function: ror, address_mode: absolute_x_const, cycles: 7 },		//0x7e
     Opcode{ name:"rra", function: rra, address_mode: absolute_x, cycles: 7 },		//0x7f
     Opcode{ name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x80
     Opcode{ name:"sta", function: sta, address_mode: indirect_x, cycles: 6 },		//0x81
@@ -189,11 +189,11 @@ pub (super) static OPCODE_TABLE: [Opcode; 256] = [
     Opcode{ name:"stx", function: stx, address_mode: zero_page_y, cycles: 4 },		//0x96
     Opcode{ name:"sax", function: sax, address_mode: zero_page_y, cycles: 4 },		//0x97
     Opcode{ name:"tya", function: tya, address_mode: implied, cycles: 2 },		//0x98
-    Opcode{ name:"sta", function: sta, address_mode: absolute_y, cycles: 5 },		//0x99
+    Opcode{ name:"sta", function: sta, address_mode: absolute_y_const, cycles: 5 },		//0x99
     Opcode{ name:"txs", function: txs, address_mode: implied, cycles: 2 },		//0x9a
     Opcode{ name:"tas", function: tas, address_mode: absolute_y, cycles: 5 },		//0x9b
     Opcode{ name:"shy", function: shy, address_mode: absolute_x, cycles: 5 },		//0x9c
-    Opcode{ name:"sta", function: sta, address_mode: absolute_x, cycles: 5 },		//0x9d
+    Opcode{ name:"sta", function: sta, address_mode: absolute_x_const, cycles: 5 },		//0x9d
     Opcode{ name:"shx", function: shx, address_mode: absolute_y, cycles: 5 },		//0x9e
     Opcode{ name:"ahx", function: ahx, address_mode: absolute_y, cycles: 5 },		//0x9f
     Opcode{ name:"ldy", function: ldy, address_mode: immediate, cycles: 2 },		//0xa0
@@ -258,7 +258,7 @@ pub (super) static OPCODE_TABLE: [Opcode; 256] = [
     Opcode{ name:"dcp", function: dcp, address_mode: absolute_y, cycles: 7 },		//0xdb
     Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0xdc
     Opcode{ name:"cmp", function: cmp, address_mode: absolute_x, cycles: 4 },		//0xdd
-    Opcode{ name:"dec", function: dec, address_mode: absolute_x, cycles: 7 },		//0xde
+    Opcode{ name:"dec", function: dec, address_mode: absolute_x_const, cycles: 7 },		//0xde
     Opcode{ name:"dcp", function: dcp, address_mode: absolute_x, cycles: 7 },		//0xdf
     Opcode{ name:"cpx", function: cpx, address_mode: immediate, cycles: 2 },		//0xe0
     Opcode{ name:"sbc", function: sbc, address_mode: indirect_x, cycles: 6 },		//0xe1
@@ -290,7 +290,7 @@ pub (super) static OPCODE_TABLE: [Opcode; 256] = [
     Opcode{ name:"isc", function: isc, address_mode: absolute_y, cycles: 7 },		//0xfb
     Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0xfc
     Opcode{ name:"sbc", function: sbc, address_mode: absolute_x, cycles: 4 },		//0xfd
-    Opcode{ name:"inc", function: inc, address_mode: absolute_x, cycles: 7 },		//0xfe
+    Opcode{ name:"inc", function: inc, address_mode: absolute_x_const, cycles: 7 },		//0xfe
     Opcode{ name:"isc", function: isc, address_mode: absolute_x, cycles: 7 },		//0xff
 ];
 
