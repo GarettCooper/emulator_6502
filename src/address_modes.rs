@@ -122,6 +122,20 @@ pub(crate) fn indirect_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
     return AddressModeValue::AbsoluteAddress(offset_address);
 }
 
+///Indirect Y: Address mode that reads from the 8-bit given address to get the actual address and then offsets it by y.
+/// This extra mode accounts for the special case where the instruction takes the same number of cycles regardless
+/// of crossing a page boundary.
+pub(crate) fn indirect_y_const(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
+    let indirect_address = bus.read(cpu.program_counter);
+    // Simulate bug at page edge
+    let address = ((bus.read(indirect_address.wrapping_add(1) as u16) as u16) << 8 ) |
+        bus.read(indirect_address as u16) as u16;
+    let offset_address = address.wrapping_add(u16::from(cpu.y_register));
+
+    cpu.program_counter += 1;
+    return AddressModeValue::AbsoluteAddress(offset_address);
+}
+
 ///Relative: Address mode used by branch instructions that reads an 8-bit signed relative address to add to the program counter
 pub(crate) fn relative(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let relative_address = bus.read(cpu.program_counter);
