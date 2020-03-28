@@ -93,7 +93,7 @@ const STACK_PAGE: u16 = 0x0100;
 ///The address that the program counter will be read from when a non-maskable interrupt request is made
 const NMI_ADDRESS_LOCATION: u16 = 0xfffa;
 ///The address that the program counter will be read from when reset is called
-const RESET_ADDRESS_LOCATION: u16 = 0xfffa;
+const RESET_ADDRESS_LOCATION: u16 = 0xfffc;
 ///The address that the program counter will be read from when an interrupt request is made or BRK is called
 const IRQ_ADDRESS_LOCATION: u16 = 0xfffe;
 
