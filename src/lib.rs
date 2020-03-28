@@ -138,6 +138,8 @@ pub struct MOS6502 {
     // Other
     /// The number of cycles before the next opcode is run
     remaining_cycles: u8,
+    /// The total number of cycles that have passed during program execution
+    total_cycles: u64,
     // Tracking Booleans
     /// Boolean tracking whether or not a non-maskable interrupt request has been made
     pending_nmi: bool,
@@ -156,6 +158,7 @@ impl MOS6502 {
             stack_pointer: 0xFD,
             status_register: 0x24,
             remaining_cycles: 0,
+            total_cycles: 0,
             pending_nmi: false,
             pending_irq: false,
         }
@@ -211,13 +214,24 @@ impl MOS6502 {
                 self.program_counter += 1;
                 let address_mode_value = instruction.find_address(self, interface);
 
-                trace!("0x{:04X} {} {:?}", log_program_counter, instruction.get_name(), address_mode_value);
+                trace!("0x{:04X} {} {:?} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} CYC:{}",
+                        log_program_counter,
+                        instruction.get_name(),
+                        address_mode_value,
+                        self.accumulator,
+                        self.x_register,
+                        self.y_register,
+                        self.status_register,
+                        self.stack_pointer,
+                        self.total_cycles + 7,
+                );
 
                 instruction.execute_instruction(self, interface, address_mode_value);
                 self.remaining_cycles += instruction.get_cycles();
             }
         }
         self.remaining_cycles -= 1;
+        self.total_cycles += 1;
     }
 
     /// Runs as many processor cycles as it takes to complete the instruction at the program counter
