@@ -1,7 +1,14 @@
-//! # emulator_6502
-//! Hello friends, prospective employers, and people who Googled "6502 emulator rust", you've found a small personal project I've been working on since early September of 2019 to use as a talking point during the interview process for my Winter 2020 co-op placement. The goal of the project is to demonstrate my ability to pick up a new programming language while developing a complex system.
+//! Hello friends, prospective employers, and people who Googled "6502 emulator rust", you've found
+//! a small personal project I've been working on since early September of 2019 to use as a talking
+//! point during the interview process for my Winter 2020 co-op placement. The goal of the project
+//! is to demonstrate my ability to pick up a new programming language while developing a complex
+//! system.
 //!
-//! This is a general purpose Rust implementation of an [MOS 6502](https://en.wikipedia.org/wiki/MOS_Technology_6502) emulator, capable of executing code in isolation or as part of one of the many systems the 6502 was used in, including the Commodore 64, Apple II, and Nintendo Entertainment System. To do so, the library provides the Interface6502 trait which allows the client to implement its own functions for reading and writing to memory addresses.
+//! This is a general purpose Rust implementation of an [MOS 6502](https://en.wikipedia.org/wiki/MOS_Technology_6502)
+//! emulator, capable of executing code in isolation or as part of one of the many systems the 6502
+//! was used in, including the Commodore 64, Apple II, and Nintendo Entertainment System. To do so,
+//! the library provides the Interface6502 trait which allows the client to implement its own
+//! functions for reading and writing to memory addresses.
 //!
 //! ### Defining an interface
 //!
@@ -29,9 +36,14 @@
 //!
 //! ```
 //!
-//! In this example, the interface to be used with the emulator simply maps addresses to ram locations. The client is responsible for loading the 6502 binary program it wishes to run into an appropriate part of the address range. A more complex interface could map specific addresses to other emulated device components.
+//! In this example, the interface to be used with the emulator simply maps addresses to ram locations.
+//! The client is responsible for loading the 6502 binary program it wishes to run into an appropriate
+//! part of the address range. A more complex interface could map specific addresses to other emulated
+//! device components.
 //!
-//! For example, a NES implementation using this 6502 emulator would map reads and writes to addresses 0x2000-0x2007 to communication with the NES' picture processing unit, while a Commodore 64 implementation would map addresses 0xd000-0xd3ff for drawing to the screen.
+//! For example, a NES implementation using this 6502 emulator would map reads and writes to addresses
+//! 0x2000-0x2007 to communication with the NES' picture processing unit, while a Commodore 64
+//! implementation would map addresses 0xd000-0xd3ff for drawing to the screen.
 //!
 //! ### Running a program
 //!
