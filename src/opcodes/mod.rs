@@ -2325,7 +2325,7 @@ mod test {
                 panic! {"Read function was called"}
             },
             write: |address, data, write_count| match address {
-                0x01fd => assert_eq!(data, 0x00 | StatusFlag::Break as u8),
+                0x01fd => assert_eq!(data, StatusFlag::Break as u8),
                 _ => panic!("Unintended Address Accessed: 0x{:X}", address),
             }, ..Default::default()
         };

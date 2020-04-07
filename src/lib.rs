@@ -313,12 +313,6 @@ fn read_16(bus: &mut dyn Interface6502, address: u16) -> u16 {
     return (hi << 8) | lo;
 }
 
-/// Wrapper function for writing 16 bits at a time
-fn write_16(bus: &mut dyn Interface6502, address: u16, data: u16) {
-    bus.write(address, data as u8);
-    bus.write(address + 1, (data >> 8) as u8);
-}
-
 ///Trait for interfacing with the 6502
 ///
 /// ### Declaration Example

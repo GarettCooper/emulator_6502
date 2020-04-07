@@ -38,7 +38,7 @@ fn load_test(ram: &mut BasicRam, file_name: &str) -> Result<()> {
     source_path.push("tests/bins");
     source_path.push(file_name);
 
-    let mut file = File::open(source_path.clone())?;
+    let mut file = File::open(source_path)?;
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
 

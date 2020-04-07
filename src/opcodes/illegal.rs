@@ -1,7 +1,6 @@
 ///ILLEGAL OPCODES----------------------------------------------------------------------------------
 /// This module contains all functions for the illegal opcodes that are not defined by official sources
-use crate::{Interface6502, MOS6502};
-//use super::super::StatusFlag; //Commented for later when these are implemented
+use crate::MOS6502;
 use crate::address_modes::{AddressModeValue};
 use super::*;
 
@@ -232,7 +231,7 @@ mod test {
     #![allow(unused_variables, unused_mut)] //Allow some warnings for test code
 
     use super::*;
-    use crate::{Interface6502, MOS6502};
+    use crate::MOS6502;
     use crate::address_modes::AddressModeValue;
     use crate::test_utilities::StubInterface6502;
 
