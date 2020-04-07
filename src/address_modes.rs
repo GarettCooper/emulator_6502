@@ -1,18 +1,21 @@
-//ADDRESS MODES---------------------------------------------------------------------------------
-//  An address mode function is called by an opcode function, returning a memory address and the
-//  number of extra cycles that may be required under specific circumstances (Typically crossing page boundaries)
+//! ### ADDRESS MODES
+//! This module contains all of the functions for the 6502's addressing modes.
+//!
+//! An address mode function is called before an opcode function, returning a memory address and the
+//! number of extra cycles that may be required under specific circumstances
+//! (Typically crossing page boundaries).
 
 use super::{Interface6502, MOS6502};
 use std::fmt;
 
-///Absolute: Address mode returning a 16-bit absolute address
+/// Absolute: Address mode returning a 16-bit absolute address
 pub(crate) fn absolute(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let address: u16 = super::read_16(bus, cpu.program_counter);
     cpu.program_counter += 2;
     return AddressModeValue::AbsoluteAddress(address);
 }
 
-///Absolute X: Address mode returning a 16-bit absolute address offset by the x register
+/// Absolute X: Address mode returning a 16-bit absolute address offset by the x register
 pub(crate) fn absolute_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let address: u16 = super::read_16(bus, cpu.program_counter);
     let offset_address: u16 = address + u16::from(cpu.x_register);
@@ -28,7 +31,7 @@ pub(crate) fn absolute_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
     return AddressModeValue::AbsoluteAddress(offset_address);
 }
 
-///Absolute X: Address mode returning a 16-bit absolute address offset by the x register. This extra
+/// Absolute X: Address mode returning a 16-bit absolute address offset by the x register. This extra
 /// mode accounts for the special case where the instruction takes the same number of cycles regardless
 /// of crossing a page boundary.
 pub(crate) fn absolute_x_const(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
@@ -39,7 +42,7 @@ pub(crate) fn absolute_x_const(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -
     return AddressModeValue::AbsoluteAddress(offset_address);
 }
 
-///Absolute Y: Address mode returning a 16-bit absolute address offset by the y register
+/// Absolute Y: Address mode returning a 16-bit absolute address offset by the y register
 pub(crate) fn absolute_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let address: u16 = super::read_16(bus, cpu.program_counter);
     let offset_address: u16 = address.wrapping_add(u16::from(cpu.y_register));
@@ -55,7 +58,7 @@ pub(crate) fn absolute_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
     return AddressModeValue::AbsoluteAddress(offset_address);
 }
 
-///Absolute Y: Address mode returning a 16-bit absolute address offset by the y register. This extra
+/// Absolute Y: Address mode returning a 16-bit absolute address offset by the y register. This extra
 /// mode accounts for the special case where the instruction takes the same number of cycles regardless
 /// of crossing a page boundary.
 pub(crate) fn absolute_y_const(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
@@ -66,7 +69,7 @@ pub(crate) fn absolute_y_const(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -
     return AddressModeValue::AbsoluteAddress(offset_address);
 }
 
-///Immediate: Address mode using next byte as value
+/// Immediate: Address mode using next byte as value
 pub(crate) fn immediate(cpu: &mut MOS6502, _bus: &mut dyn Interface6502) -> AddressModeValue {
     //Return the current location of the program counter
     let address = cpu.program_counter;
@@ -74,12 +77,12 @@ pub(crate) fn immediate(cpu: &mut MOS6502, _bus: &mut dyn Interface6502) -> Addr
     return AddressModeValue::AbsoluteAddress(address);
 }
 
-///Implied: Address mode for opcodes that do not require a value or address
+/// Implied: Address mode for opcodes that do not require a value or address
 pub(crate) fn implied(_cpu: &mut MOS6502, _bus: &mut dyn Interface6502) -> AddressModeValue {
     return AddressModeValue::Implied;
 }
 
-///Indirect: Address mode that reads from the given address to get the actual address
+/// Indirect: Address mode that reads from the given address to get the actual address
 pub(crate) fn indirect(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let indirect_address = super::read_16(bus, cpu.program_counter);
 
@@ -91,7 +94,7 @@ pub(crate) fn indirect(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addres
     return AddressModeValue::AbsoluteAddress(address);
 }
 
-///Indirect X: Address mode that reads from the 8-bit given address offset by x to get the actual address
+/// Indirect X: Address mode that reads from the 8-bit given address offset by x to get the actual address
 pub(crate) fn indirect_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let indirect_address = bus.read(cpu.program_counter);
 
@@ -103,7 +106,7 @@ pub(crate) fn indirect_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
     return AddressModeValue::AbsoluteAddress(address);
 }
 
-///Indirect Y: Address mode that reads from the 8-bit given address to get the actual address and then offsets it by y
+/// Indirect Y: Address mode that reads from the 8-bit given address to get the actual address and then offsets it by y
 pub(crate) fn indirect_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let indirect_address = bus.read(cpu.program_counter);
     // Simulate bug at page edge
@@ -122,7 +125,7 @@ pub(crate) fn indirect_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
     return AddressModeValue::AbsoluteAddress(offset_address);
 }
 
-///Indirect Y: Address mode that reads from the 8-bit given address to get the actual address and then offsets it by y.
+/// Indirect Y: Address mode that reads from the 8-bit given address to get the actual address and then offsets it by y.
 /// This extra mode accounts for the special case where the instruction takes the same number of cycles regardless
 /// of crossing a page boundary.
 pub(crate) fn indirect_y_const(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
@@ -136,21 +139,21 @@ pub(crate) fn indirect_y_const(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -
     return AddressModeValue::AbsoluteAddress(offset_address);
 }
 
-///Relative: Address mode used by branch instructions that reads an 8-bit signed relative address to add to the program counter
+/// Relative: Address mode used by branch instructions that reads an 8-bit signed relative address to add to the program counter
 pub(crate) fn relative(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let relative_address = bus.read(cpu.program_counter);
     cpu.program_counter += 1;
     return AddressModeValue::RelativeAddress(relative_address);
 }
 
-///Zero-page: Address mode that uses an 8-bit address to access memory on the 0 page (0x00__)
+/// Zero-page: Address mode that uses an 8-bit address to access memory on the 0 page (0x00__)
 pub(crate) fn zero_page(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let address = u16::from(bus.read(cpu.program_counter));
     cpu.program_counter += 1;
     return AddressModeValue::AbsoluteAddress(address);
 }
 
-///Zero-page X: Address mode that uses an 8-bit address to access memory on the 0 page (0x00__), offset by x
+/// Zero-page X: Address mode that uses an 8-bit address to access memory on the 0 page (0x00__), offset by x
 // TODO: Implement offset bug
 pub(crate) fn zero_page_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let address = bus.read(cpu.program_counter).wrapping_add(cpu.x_register);
@@ -158,7 +161,7 @@ pub(crate) fn zero_page_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Add
     return AddressModeValue::AbsoluteAddress(u16::from(address));
 }
 
-///Zero-page Y: Address mode that uses an 8-bit address to access memory on the 0 page (0x00__), offset by y
+/// Zero-page Y: Address mode that uses an 8-bit address to access memory on the 0 page (0x00__), offset by y
 // TODO: Implement offset bug
 pub(crate) fn zero_page_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let address = bus.read(cpu.program_counter).wrapping_add(cpu.y_register);
@@ -166,7 +169,7 @@ pub(crate) fn zero_page_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Add
     return AddressModeValue::AbsoluteAddress(u16::from(address));
 }
 
-///Enum for the return type of Address modes
+/// Enum for the return type of Address modes
 #[derive(PartialEq, Clone, Copy)]
 pub(crate) enum AddressModeValue {
     Implied,

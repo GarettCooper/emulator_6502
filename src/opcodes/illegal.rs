@@ -1,5 +1,5 @@
-///ILLEGAL OPCODES----------------------------------------------------------------------------------
-/// This module contains all functions for the illegal opcodes that are not defined by official sources
+//! ### ILLEGAL OPCODES
+//! This module contains all functions for the illegal opcodes that are not defined by official sources
 use crate::MOS6502;
 use crate::address_modes::{AddressModeValue};
 use super::*;
@@ -228,7 +228,7 @@ pub(super) fn kil(_cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mod
 
 #[cfg(all(test, feature = "illegal_opcodes"))]
 mod test {
-    #![allow(unused_variables, unused_mut)] //Allow some warnings for test code
+    #![allow(unused_variables, unused_mut)] // Allow some warnings for test code
 
     use super::*;
     use crate::MOS6502;

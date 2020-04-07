@@ -1,75 +1,75 @@
-//!# emulator_6502
-//!Hello friends, prospective employers, and people who Googled "6502 emulator rust", you've found a small personal project I've been working on since early September of 2019 to use as a talking point during the interview process for my Winter 2020 co-op placement. The goal of the project is to demonstrate my ability to pick up a new programming language while developing a complex system.
+//! # emulator_6502
+//! Hello friends, prospective employers, and people who Googled "6502 emulator rust", you've found a small personal project I've been working on since early September of 2019 to use as a talking point during the interview process for my Winter 2020 co-op placement. The goal of the project is to demonstrate my ability to pick up a new programming language while developing a complex system.
 //!
-//!This is a general purpose Rust implementation of an [MOS 6502](https://en.wikipedia.org/wiki/MOS_Technology_6502) emulator, capable of executing code in isolation or as part of one of the many systems the 6502 was used in, including the Commodore 64, Apple II, and Nintendo Entertainment System. To do so, the library provides the Interface6502 trait which allows the client to implement its own functions for reading and writing to memory addresses.
+//! This is a general purpose Rust implementation of an [MOS 6502](https://en.wikipedia.org/wiki/MOS_Technology_6502) emulator, capable of executing code in isolation or as part of one of the many systems the 6502 was used in, including the Commodore 64, Apple II, and Nintendo Entertainment System. To do so, the library provides the Interface6502 trait which allows the client to implement its own functions for reading and writing to memory addresses.
 //!
-//!### Defining an interface
+//! ### Defining an interface
 //!
-//!```rust,ignore
+//! ```rust,ignore
 //!
-//!struct BasicRam{
-//!    ram: Box<[u8; u16::max_value() as usize + 1]> //The maximum address range of the 6502
-//!}
+//! struct BasicRam{
+//!     ram: Box<[u8; u16::max_value() as usize + 1]> //The maximum address range of the 6502
+//! }
 //!
-//!impl BasicRam {
-//!    fn load_program(&mut self, start: usize, data: &mut Vec<u8>){
-//!        self.ram[start..].clone_from_slice(data);
-//!    }
-//!}
+//! impl BasicRam {
+//!     fn load_program(&mut self, start: usize, data: &mut Vec<u8>){
+//!         self.ram[start..].clone_from_slice(data);
+//!     }
+//! }
 //!
-//!impl Interface6502 for BasicRam{
-//!    fn read(&mut self, address: u16) -> u8{
-//!        self.ram[address as usize]
-//!    }
+//! impl Interface6502 for BasicRam{
+//!     fn read(&mut self, address: u16) -> u8{
+//!         self.ram[address as usize]
+//!     }
 //!
-//!    fn write(&mut self, address: u16, data: u8){
-//!        self.ram[address as usize] = data
-//!    }
-//!}
+//!     fn write(&mut self, address: u16, data: u8){
+//!         self.ram[address as usize] = data
+//!     }
+//! }
 //!
-//!```
+//! ```
 //!
-//!In this example, the interface to be used with the emulator simply maps addresses to ram locations. The client is responsible for loading the 6502 binary program it wishes to run into an appropriate part of the address range. A more complex interface could map specific addresses to other emulated device components.
+//! In this example, the interface to be used with the emulator simply maps addresses to ram locations. The client is responsible for loading the 6502 binary program it wishes to run into an appropriate part of the address range. A more complex interface could map specific addresses to other emulated device components.
 //!
-//!For example, a NES implementation using this 6502 emulator would map reads and writes to addresses 0x2000-0x2007 to communication with the NES' picture processing unit, while a Commodore 64 implementation would map addresses 0xd000-0xd3ff for drawing to the screen.
+//! For example, a NES implementation using this 6502 emulator would map reads and writes to addresses 0x2000-0x2007 to communication with the NES' picture processing unit, while a Commodore 64 implementation would map addresses 0xd000-0xd3ff for drawing to the screen.
 //!
-//!### Running a program
+//! ### Running a program
 //!
-//!```rust,ignore
+//! ```rust,ignore
 //!
-//!fn main() -> Result<()>{
-//!  let mut ram = BasicRam{ ram: Box::new([0; u16::max_value() as usize + 1]) };
+//! fn main() -> Result<()>{
+//!   let mut ram = BasicRam{ ram: Box::new([0; u16::max_value() as usize + 1]) };
 //!
-//!  //Load a program into memory...
-//!  let mut file = File::open("C:/some_6502_program.bin")?;
-//!  let mut buffer = Vec::new();
-//!  file.read_to_end(&mut buffer)?;
+//!   //Load a program into memory...
+//!   let mut file = File::open("C:/some_6502_program.bin")?;
+//!   let mut buffer = Vec::new();
+//!   file.read_to_end(&mut buffer)?;
 //!
-//!  //Copy it into the BasicRam
-//!  ram.load_program(0x0400, &mut buffer);
+//!   //Copy it into the BasicRam
+//!   ram.load_program(0x0400, &mut buffer);
 //!
-//!  let mut cpu = MOS6502::new(); //Create a new emulator instance
-//!  cpu.set_program_counter(0x0400); //Set the program counter to the first byte of the program in memory
-//!  cpu.cycle(&mut ram); // The emulator can execute cycles individually, for systems that require precise timing...
-//!  cpu.execute_instruction(&mut ram); // or instruction by instruction for a coarser approach
+//!   let mut cpu = MOS6502::new(); //Create a new emulator instance
+//!   cpu.set_program_counter(0x0400); //Set the program counter to the first byte of the program in memory
+//!   cpu.cycle(&mut ram); // The emulator can execute cycles individually, for systems that require precise timing...
+//!   cpu.execute_instruction(&mut ram); // or instruction by instruction for a coarser approach
 //!
-//!  Ok(())
-//!}
+//!   Ok(())
+//! }
 //!
-//!```
-//!Each cycle/instruction the processor borrows mutable ownership of the interface in order to read and write to it.
+//! ```
+//! Each cycle/instruction the processor borrows mutable ownership of the interface in order to read and write to it.
 //!
-//!NOTE: When an instruction is executed, the entire computation is carried out simultaneously before the processor simply waits for the
-//!remaining number of cycles, meaning that timing of reads and writes is only accurate on an instruction-by-instruction basis, not cycle-by-cycle
+//! NOTE: When an instruction is executed, the entire computation is carried out simultaneously before the processor simply waits for the
+//! remaining number of cycles, meaning that timing of reads and writes is only accurate on an instruction-by-instruction basis, not cycle-by-cycle
 //!
-//!### Supported Features:
-//!* Full implementation of documented instruction set
-//!* Emulation of bugs that existed in the original 6502 hardware
-//!* Binary Coded Decimal when the "binary_coded_decimal" compilation feature is enabled
-//!* Illegal undocumented opcodes when the "illegal_opcodes" compilation feature is enabled
+//! ### Supported Features:
+//! * Full implementation of documented instruction set
+//! * Emulation of bugs that existed in the original 6502 hardware
+//! * Binary Coded Decimal when the "binary_coded_decimal" compilation feature is enabled
+//! * Illegal undocumented opcodes when the "illegal_opcodes" compilation feature is enabled
 //!
-//!If illegal opcodes are called without the "illegal_opcodes" compilation feature enabled, the emulator will log a warning
-//!and run for the appropriate number of cycles without changing state.
+//! If illegal opcodes are called without the "illegal_opcodes" compilation feature enabled, the emulator will log a warning
+//! and run for the appropriate number of cycles without changing state.
 
 #![allow(clippy::needless_return)] // My preferred style
 
@@ -82,10 +82,11 @@ mod test_utilities;
 extern crate log;
 
 use address_modes::*;
-use std::u8;
 
 //Declare some type alias for clarity's sake
+/// The type of all Address Mode functions
 type AddressModeFunction = fn(&mut MOS6502, &mut dyn Interface6502) -> AddressModeValue;
+/// The type of all Opcode functions
 type OpcodeFunction = fn(&mut MOS6502, &mut dyn Interface6502, AddressModeValue);
 
 ///The value that will be added to the stack pointer
@@ -97,7 +98,7 @@ const RESET_ADDRESS_LOCATION: u16 = 0xfffc;
 ///The address that the program counter will be read from when an interrupt request is made or BRK is called
 const IRQ_ADDRESS_LOCATION: u16 = 0xfffe;
 
-///Struct representation of the MOS 6502 processor
+/// Struct representation of the MOS 6502 processor
 ///
 /// ### Usage Example
 /// ```rust,ignore
@@ -118,7 +119,7 @@ const IRQ_ADDRESS_LOCATION: u16 = 0xfffe;
 ///  cpu.execute_instruction(&mut ram); // or instruction by instruction for a coarser approach
 ///
 ///  Ok(())
-///}
+/// }
 /// ```
 #[derive(Debug, PartialEq, Clone)]
 pub struct MOS6502 {
@@ -313,36 +314,39 @@ fn read_16(bus: &mut dyn Interface6502, address: u16) -> u16 {
     return (hi << 8) | lo;
 }
 
-///Trait for interfacing with the 6502
+/// Trait that other devices can use for interfacing with the 6502.
 ///
-/// ### Declaration Example
-/// ```rust,ignore
-/// struct BasicRam{
-///    ram: Box<[u8; u16::max_value() as usize + 1]> //The maximum address range of the 6502
-///}
+///  ### Declaration Example
+///  ```rust,ignore
+///  struct BasicRam{
+///     ram: Box<[u8; u16::max_value() as usize + 1]> //The maximum address range of the 6502
+/// }
 ///
-///impl BasicRam {
-///    fn load_program(&mut self, start: usize, data: &mut Vec<u8>){
-///        self.ram[start..].clone_from_slice(data);
-///    }
-///}
+/// impl BasicRam {
+///     fn load_program(&mut self, start: usize, data: &mut Vec<u8>){
+///         self.ram[start..].clone_from_slice(data);
+///     }
+/// }
 ///
-///impl Interface6502 for BasicRam{
-///    fn read(&mut self, address: u16) -> u8{
-///        self.ram[address as usize]
-///    }
+/// impl Interface6502 for BasicRam{
+///     fn read(&mut self, address: u16) -> u8{
+///         self.ram[address as usize]
+///     }
 ///
-///    fn write(&mut self, address: u16, data: u8){
-///        self.ram[address as usize] = data
-///    }
-///}
-/// ```
+///     fn write(&mut self, address: u16, data: u8){
+///         self.ram[address as usize] = data
+///     }
+/// }
+///  ```
 pub trait Interface6502 {
+    /// Reads a byte from the interface at the given address
     fn read(&mut self, address: u16) -> u8;
+    /// Writes a byte to the interface at the given address
     fn write(&mut self, address: u16, data: u8);
 }
 
 #[derive(Debug, Copy, Clone)]
+/// Enum used to represent the different flags in the 6502's status register
 enum StatusFlag {
     Carry = 0b0000_0001,
     Zero = 0b0000_0010,

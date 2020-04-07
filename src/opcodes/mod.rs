@@ -1,7 +1,7 @@
-/// OPCODES---------------------------------------------------------------------------------------
-///  This module contains all of the opcode functions to prevent the parent module from being primarily full of them
-///  An opcode function represents one of the 6502's opcodes. An opcode function is passed the
-///  address mode to use and returns the number of extra cycles that address mode has taken
+//!  ### OPCODES
+//!  This module contains all of the opcode functions to prevent the parent module from being primarily full of them
+//!  An opcode function represents one of the 6502's opcodes. An opcode function is passed the
+//!  address mode to use and returns the number of extra cycles that address mode has taken
 mod illegal;
 
 use super::address_modes::*;
@@ -9,292 +9,299 @@ use super::{AddressModeFunction, Interface6502, OpcodeFunction, StatusFlag, MOS6
 use illegal::*;
 
 #[derive(Clone, Copy)]
-pub(super) struct Opcode<'a> {
+/// Type used to represent an Opcode, a single instruction on the 6502
+pub(super) struct Instruction<'a> {
     name: &'a str, //For logging
     function: OpcodeFunction,
     address_mode: AddressModeFunction,
     cycles: u8,
 }
 
-impl Opcode<'_> {
+impl Instruction<'_> {
+    /// Gets the name of the opcode for debug purposes
     pub(super) fn get_name(&self) -> &str {
         return self.name;
     }
 
+    /// Executes the instruction by calling the wrapped function
     pub(super) fn execute_instruction(&self, cpu: &mut MOS6502, interface: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
         (self.function)(cpu, interface, address_mode_value);
     }
 
+    /// Calls the address mode function to retrieve the addressed location to be used in the instruction
     pub(super) fn find_address(&self, cpu: &mut MOS6502, interface: &mut dyn Interface6502) -> AddressModeValue {
         return (self.address_mode)(cpu, interface);
     }
 
+    /// Gets the number of cycles that executing this instruction will take
     pub(super) fn get_cycles(&self) -> u8 {
         return self.cycles;
     }
 }
 
 //TODO: Replace this with a macro-generated match statement so that it can be better evaluated at compile time
-pub (super) static OPCODE_TABLE: [Opcode; 256] = [
-    Opcode{ name:"brk", function: brk, address_mode: implied, cycles: 7 },		//0x0
-    Opcode{ name:"ora", function: ora, address_mode: indirect_x, cycles: 6 },		//0x1
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x2
-    Opcode{ name:"slo", function: slo, address_mode: indirect_x, cycles: 8 },		//0x3
-    Opcode{ name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x4
-    Opcode{ name:"ora", function: ora, address_mode: zero_page, cycles: 3 },		//0x5
-    Opcode{ name:"asl", function: asl, address_mode: zero_page, cycles: 5 },		//0x6
-    Opcode{ name:"slo", function: slo, address_mode: zero_page, cycles: 5 },		//0x7
-    Opcode{ name:"php", function: php, address_mode: implied, cycles: 3 },		//0x8
-    Opcode{ name:"ora", function: ora, address_mode: immediate, cycles: 2 },		//0x9
-    Opcode{ name:"asl", function: asl, address_mode: implied, cycles: 2 },		//0xa
-    Opcode{ name:"anc", function: anc, address_mode: immediate, cycles: 2 },		//0xb
-    Opcode{ name:"nop", function: nop, address_mode: absolute, cycles: 4 },		//0xc
-    Opcode{ name:"ora", function: ora, address_mode: absolute, cycles: 4 },		//0xd
-    Opcode{ name:"asl", function: asl, address_mode: absolute, cycles: 6 },		//0xe
-    Opcode{ name:"slo", function: slo, address_mode: absolute, cycles: 6 },		//0xf
-    Opcode{ name:"bpl", function: bpl, address_mode: relative, cycles: 2 },		//0x10
-    Opcode{ name:"ora", function: ora, address_mode: indirect_y, cycles: 5 },		//0x11
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x12
-    Opcode{ name:"slo", function: slo, address_mode: indirect_y_const, cycles: 8 },		//0x13
-    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x14
-    Opcode{ name:"ora", function: ora, address_mode: zero_page_x, cycles: 4 },		//0x15
-    Opcode{ name:"asl", function: asl, address_mode: zero_page_x, cycles: 6 },		//0x16
-    Opcode{ name:"slo", function: slo, address_mode: zero_page_x, cycles: 6 },		//0x17
-    Opcode{ name:"clc", function: clc, address_mode: implied, cycles: 2 },		//0x18
-    Opcode{ name:"ora", function: ora, address_mode: absolute_y, cycles: 4 },		//0x19
-    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x1a
-    Opcode{ name:"slo", function: slo, address_mode: absolute_y_const, cycles: 7 },		//0x1b
-    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x1c
-    Opcode{ name:"ora", function: ora, address_mode: absolute_x, cycles: 4 },		//0x1d
-    Opcode{ name:"asl", function: asl, address_mode: absolute_x_const, cycles: 7 },		//0x1e
-    Opcode{ name:"slo", function: slo, address_mode: absolute_x_const, cycles: 7 },		//0x1f
-    Opcode{ name:"jsr", function: jsr, address_mode: absolute, cycles: 6 },		//0x20
-    Opcode{ name:"and", function: and, address_mode: indirect_x, cycles: 6 },		//0x21
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x22
-    Opcode{ name:"rla", function: rla, address_mode: indirect_x, cycles: 8 },		//0x23
-    Opcode{ name:"bit", function: bit, address_mode: zero_page, cycles: 3 },		//0x24
-    Opcode{ name:"and", function: and, address_mode: zero_page, cycles: 3 },		//0x25
-    Opcode{ name:"rol", function: rol, address_mode: zero_page, cycles: 5 },		//0x26
-    Opcode{ name:"rla", function: rla, address_mode: zero_page, cycles: 5 },		//0x27
-    Opcode{ name:"plp", function: plp, address_mode: implied, cycles: 4 },		//0x28
-    Opcode{ name:"and", function: and, address_mode: immediate, cycles: 2 },		//0x29
-    Opcode{ name:"rol", function: rol, address_mode: implied, cycles: 2 },		//0x2a
-    Opcode{ name:"anc", function: anc, address_mode: immediate, cycles: 2 },		//0x2b
-    Opcode{ name:"bit", function: bit, address_mode: absolute, cycles: 4 },		//0x2c
-    Opcode{ name:"and", function: and, address_mode: absolute, cycles: 4 },		//0x2d
-    Opcode{ name:"rol", function: rol, address_mode: absolute, cycles: 6 },		//0x2e
-    Opcode{ name:"rla", function: rla, address_mode: absolute, cycles: 6 },		//0x2f
-    Opcode{ name:"bmi", function: bmi, address_mode: relative, cycles: 2 },		//0x30
-    Opcode{ name:"and", function: and, address_mode: indirect_y, cycles: 5 },		//0x31
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x32
-    Opcode{ name:"rla", function: rla, address_mode: indirect_y_const, cycles: 8 },		//0x33
-    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x34
-    Opcode{ name:"and", function: and, address_mode: zero_page_x, cycles: 4 },		//0x35
-    Opcode{ name:"rol", function: rol, address_mode: zero_page_x, cycles: 6 },		//0x36
-    Opcode{ name:"rla", function: rla, address_mode: zero_page_x, cycles: 6 },		//0x37
-    Opcode{ name:"sec", function: sec, address_mode: implied, cycles: 2 },		//0x38
-    Opcode{ name:"and", function: and, address_mode: absolute_y, cycles: 4 },		//0x39
-    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x3a
-    Opcode{ name:"rla", function: rla, address_mode: absolute_y_const, cycles: 7 },		//0x3b
-    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x3c
-    Opcode{ name:"and", function: and, address_mode: absolute_x, cycles: 4 },		//0x3d
-    Opcode{ name:"rol", function: rol, address_mode: absolute_x_const, cycles: 7 },		//0x3e
-    Opcode{ name:"rla", function: rla, address_mode: absolute_x_const, cycles: 7 },		//0x3f
-    Opcode{ name:"rti", function: rti, address_mode: implied, cycles: 6 },		//0x40
-    Opcode{ name:"eor", function: eor, address_mode: indirect_x, cycles: 6 },		//0x41
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x42
-    Opcode{ name:"sre", function: sre, address_mode: indirect_x, cycles: 8 },		//0x43
-    Opcode{ name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x44
-    Opcode{ name:"eor", function: eor, address_mode: zero_page, cycles: 3 },		//0x45
-    Opcode{ name:"lsr", function: lsr, address_mode: zero_page, cycles: 5 },		//0x46
-    Opcode{ name:"sre", function: sre, address_mode: zero_page, cycles: 5 },		//0x47
-    Opcode{ name:"pha", function: pha, address_mode: implied, cycles: 3 },		//0x48
-    Opcode{ name:"eor", function: eor, address_mode: immediate, cycles: 2 },		//0x49
-    Opcode{ name:"lsr", function: lsr, address_mode: implied, cycles: 2 },		//0x4a
-    Opcode{ name:"alr", function: alr, address_mode: immediate, cycles: 2 },		//0x4b
-    Opcode{ name:"jmp", function: jmp, address_mode: absolute, cycles: 3 },		//0x4c
-    Opcode{ name:"eor", function: eor, address_mode: absolute, cycles: 4 },		//0x4d
-    Opcode{ name:"lsr", function: lsr, address_mode: absolute, cycles: 6 },		//0x4e
-    Opcode{ name:"sre", function: sre, address_mode: absolute, cycles: 6 },		//0x4f
-    Opcode{ name:"bvc", function: bvc, address_mode: relative, cycles: 2 },		//0x50
-    Opcode{ name:"eor", function: eor, address_mode: indirect_y, cycles: 5 },		//0x51
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x52
-    Opcode{ name:"sre", function: sre, address_mode: indirect_y_const, cycles: 8 },		//0x53
-    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x54
-    Opcode{ name:"eor", function: eor, address_mode: zero_page_x, cycles: 4 },		//0x55
-    Opcode{ name:"lsr", function: lsr, address_mode: zero_page_x, cycles: 6 },		//0x56
-    Opcode{ name:"sre", function: sre, address_mode: zero_page_x, cycles: 6 },		//0x57
-    Opcode{ name:"cli", function: cli, address_mode: implied, cycles: 2 },		//0x58
-    Opcode{ name:"eor", function: eor, address_mode: absolute_y, cycles: 4 },		//0x59
-    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x5a
-    Opcode{ name:"sre", function: sre, address_mode: absolute_y_const, cycles: 7 },		//0x5b
-    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x5c
-    Opcode{ name:"eor", function: eor, address_mode: absolute_x, cycles: 4 },		//0x5d
-    Opcode{ name:"lsr", function: lsr, address_mode: absolute_x_const, cycles: 7 },		//0x5e
-    Opcode{ name:"sre", function: sre, address_mode: absolute_x_const, cycles: 7 },		//0x5f
-    Opcode{ name:"rts", function: rts, address_mode: implied, cycles: 6 },		//0x60
-    Opcode{ name:"adc", function: adc, address_mode: indirect_x, cycles: 6 },		//0x61
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x62
-    Opcode{ name:"rra", function: rra, address_mode: indirect_x, cycles: 8 },		//0x63
-    Opcode{ name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x64
-    Opcode{ name:"adc", function: adc, address_mode: zero_page, cycles: 3 },		//0x65
-    Opcode{ name:"ror", function: ror, address_mode: zero_page, cycles: 5 },		//0x66
-    Opcode{ name:"rra", function: rra, address_mode: zero_page, cycles: 5 },		//0x67
-    Opcode{ name:"pla", function: pla, address_mode: implied, cycles: 4 },		//0x68
-    Opcode{ name:"adc", function: adc, address_mode: immediate, cycles: 2 },		//0x69
-    Opcode{ name:"ror", function: ror, address_mode: implied, cycles: 2 },		//0x6a
-    Opcode{ name:"arr", function: arr, address_mode: immediate, cycles: 2 },		//0x6b
-    Opcode{ name:"jmp", function: jmp, address_mode: indirect, cycles: 5 },		//0x6c
-    Opcode{ name:"adc", function: adc, address_mode: absolute, cycles: 4 },		//0x6d
-    Opcode{ name:"ror", function: ror, address_mode: absolute, cycles: 6 },		//0x6e
-    Opcode{ name:"rra", function: rra, address_mode: absolute, cycles: 6 },		//0x6f
-    Opcode{ name:"bvs", function: bvs, address_mode: relative, cycles: 2 },		//0x70
-    Opcode{ name:"adc", function: adc, address_mode: indirect_y, cycles: 5 },		//0x71
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x72
-    Opcode{ name:"rra", function: rra, address_mode: indirect_y_const, cycles: 8 },		//0x73
-    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x74
-    Opcode{ name:"adc", function: adc, address_mode: zero_page_x, cycles: 4 },		//0x75
-    Opcode{ name:"ror", function: ror, address_mode: zero_page_x, cycles: 6 },		//0x76
-    Opcode{ name:"rra", function: rra, address_mode: zero_page_x, cycles: 6 },		//0x77
-    Opcode{ name:"sei", function: sei, address_mode: implied, cycles: 2 },		//0x78
-    Opcode{ name:"adc", function: adc, address_mode: absolute_y, cycles: 4 },		//0x79
-    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x7a
-    Opcode{ name:"rra", function: rra, address_mode: absolute_y_const, cycles: 7 },		//0x7b
-    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x7c
-    Opcode{ name:"adc", function: adc, address_mode: absolute_x, cycles: 4 },		//0x7d
-    Opcode{ name:"ror", function: ror, address_mode: absolute_x_const, cycles: 7 },		//0x7e
-    Opcode{ name:"rra", function: rra, address_mode: absolute_x_const, cycles: 7 },		//0x7f
-    Opcode{ name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x80
-    Opcode{ name:"sta", function: sta, address_mode: indirect_x, cycles: 6 },		//0x81
-    Opcode{ name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x82
-    Opcode{ name:"sax", function: sax, address_mode: indirect_x, cycles: 6 },		//0x83
-    Opcode{ name:"sty", function: sty, address_mode: zero_page, cycles: 3 },		//0x84
-    Opcode{ name:"sta", function: sta, address_mode: zero_page, cycles: 3 },		//0x85
-    Opcode{ name:"stx", function: stx, address_mode: zero_page, cycles: 3 },		//0x86
-    Opcode{ name:"sax", function: sax, address_mode: zero_page, cycles: 3 },		//0x87
-    Opcode{ name:"dey", function: dey, address_mode: implied, cycles: 2 },		//0x88
-    Opcode{ name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x89
-    Opcode{ name:"txa", function: txa, address_mode: implied, cycles: 2 },		//0x8a
-    Opcode{ name:"xaa", function: xaa, address_mode: immediate, cycles: 2 },		//0x8b
-    Opcode{ name:"sty", function: sty, address_mode: absolute, cycles: 4 },		//0x8c
-    Opcode{ name:"sta", function: sta, address_mode: absolute, cycles: 4 },		//0x8d
-    Opcode{ name:"stx", function: stx, address_mode: absolute, cycles: 4 },		//0x8e
-    Opcode{ name:"sax", function: sax, address_mode: absolute, cycles: 4 },		//0x8f
-    Opcode{ name:"bcc", function: bcc, address_mode: relative, cycles: 2 },		//0x90
-    Opcode{ name:"sta", function: sta, address_mode: indirect_y, cycles: 6 },		//0x91
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x92
-    Opcode{ name:"ahx", function: ahx, address_mode: indirect_y, cycles: 6 },		//0x93
-    Opcode{ name:"sty", function: sty, address_mode: zero_page_x, cycles: 4 },		//0x94
-    Opcode{ name:"sta", function: sta, address_mode: zero_page_x, cycles: 4 },		//0x95
-    Opcode{ name:"stx", function: stx, address_mode: zero_page_y, cycles: 4 },		//0x96
-    Opcode{ name:"sax", function: sax, address_mode: zero_page_y, cycles: 4 },		//0x97
-    Opcode{ name:"tya", function: tya, address_mode: implied, cycles: 2 },		//0x98
-    Opcode{ name:"sta", function: sta, address_mode: absolute_y_const, cycles: 5 },		//0x99
-    Opcode{ name:"txs", function: txs, address_mode: implied, cycles: 2 },		//0x9a
-    Opcode{ name:"tas", function: tas, address_mode: absolute_y, cycles: 5 },		//0x9b
-    Opcode{ name:"shy", function: shy, address_mode: absolute_x, cycles: 5 },		//0x9c
-    Opcode{ name:"sta", function: sta, address_mode: absolute_x_const, cycles: 5 },		//0x9d
-    Opcode{ name:"shx", function: shx, address_mode: absolute_y, cycles: 5 },		//0x9e
-    Opcode{ name:"ahx", function: ahx, address_mode: absolute_y, cycles: 5 },		//0x9f
-    Opcode{ name:"ldy", function: ldy, address_mode: immediate, cycles: 2 },		//0xa0
-    Opcode{ name:"lda", function: lda, address_mode: indirect_x, cycles: 6 },		//0xa1
-    Opcode{ name:"ldx", function: ldx, address_mode: immediate, cycles: 2 },		//0xa2
-    Opcode{ name:"lax", function: lax, address_mode: indirect_x, cycles: 6 },		//0xa3
-    Opcode{ name:"ldy", function: ldy, address_mode: zero_page, cycles: 3 },		//0xa4
-    Opcode{ name:"lda", function: lda, address_mode: zero_page, cycles: 3 },		//0xa5
-    Opcode{ name:"ldx", function: ldx, address_mode: zero_page, cycles: 3 },		//0xa6
-    Opcode{ name:"lax", function: lax, address_mode: zero_page, cycles: 3 },		//0xa7
-    Opcode{ name:"tay", function: tay, address_mode: implied, cycles: 2 },		//0xa8
-    Opcode{ name:"lda", function: lda, address_mode: immediate, cycles: 2 },		//0xa9
-    Opcode{ name:"tax", function: tax, address_mode: implied, cycles: 2 },		//0xaa
-    Opcode{ name:"lax", function: lax, address_mode: immediate, cycles: 2 },		//0xab
-    Opcode{ name:"ldy", function: ldy, address_mode: absolute, cycles: 4 },		//0xac
-    Opcode{ name:"lda", function: lda, address_mode: absolute, cycles: 4 },		//0xad
-    Opcode{ name:"ldx", function: ldx, address_mode: absolute, cycles: 4 },		//0xae
-    Opcode{ name:"lax", function: lax, address_mode: absolute, cycles: 4 },		//0xaf
-    Opcode{ name:"bcs", function: bcs, address_mode: relative, cycles: 2 },		//0xb0
-    Opcode{ name:"lda", function: lda, address_mode: indirect_y, cycles: 5 },		//0xb1
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xb2
-    Opcode{ name:"lax", function: lax, address_mode: indirect_y, cycles: 5 },		//0xb3
-    Opcode{ name:"ldy", function: ldy, address_mode: zero_page_x, cycles: 4 },		//0xb4
-    Opcode{ name:"lda", function: lda, address_mode: zero_page_x, cycles: 4 },		//0xb5
-    Opcode{ name:"ldx", function: ldx, address_mode: zero_page_y, cycles: 4 },		//0xb6
-    Opcode{ name:"lax", function: lax, address_mode: zero_page_y, cycles: 4 },		//0xb7
-    Opcode{ name:"clv", function: clv, address_mode: implied, cycles: 2 },		//0xb8
-    Opcode{ name:"lda", function: lda, address_mode: absolute_y, cycles: 4 },		//0xb9
-    Opcode{ name:"tsx", function: tsx, address_mode: implied, cycles: 2 },		//0xba
-    Opcode{ name:"las", function: las, address_mode: absolute_y, cycles: 4 },		//0xbb
-    Opcode{ name:"ldy", function: ldy, address_mode: absolute_x, cycles: 4 },		//0xbc
-    Opcode{ name:"lda", function: lda, address_mode: absolute_x, cycles: 4 },		//0xbd
-    Opcode{ name:"ldx", function: ldx, address_mode: absolute_y, cycles: 4 },		//0xbe
-    Opcode{ name:"lax", function: lax, address_mode: absolute_y, cycles: 4 },		//0xbf
-    Opcode{ name:"cpy", function: cpy, address_mode: immediate, cycles: 2 },		//0xc0
-    Opcode{ name:"cmp", function: cmp, address_mode: indirect_x, cycles: 6 },		//0xc1
-    Opcode{ name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0xc2
-    Opcode{ name:"dcp", function: dcp, address_mode: indirect_x, cycles: 8 },		//0xc3
-    Opcode{ name:"cpy", function: cpy, address_mode: zero_page, cycles: 3 },		//0xc4
-    Opcode{ name:"cmp", function: cmp, address_mode: zero_page, cycles: 3 },		//0xc5
-    Opcode{ name:"dec", function: dec, address_mode: zero_page, cycles: 5 },		//0xc6
-    Opcode{ name:"dcp", function: dcp, address_mode: zero_page, cycles: 5 },		//0xc7
-    Opcode{ name:"iny", function: iny, address_mode: implied, cycles: 2 },		//0xc8
-    Opcode{ name:"cmp", function: cmp, address_mode: immediate, cycles: 2 },		//0xc9
-    Opcode{ name:"dex", function: dex, address_mode: implied, cycles: 2 },		//0xca
-    Opcode{ name:"axs", function: axs, address_mode: immediate, cycles: 2 },		//0xcb
-    Opcode{ name:"cpy", function: cpy, address_mode: absolute, cycles: 4 },		//0xcc
-    Opcode{ name:"cmp", function: cmp, address_mode: absolute, cycles: 4 },		//0xcd
-    Opcode{ name:"dec", function: dec, address_mode: absolute, cycles: 6 },		//0xce
-    Opcode{ name:"dcp", function: dcp, address_mode: absolute, cycles: 6 },		//0xcf
-    Opcode{ name:"bne", function: bne, address_mode: relative, cycles: 2 },		//0xd0
-    Opcode{ name:"cmp", function: cmp, address_mode: indirect_y, cycles: 5 },		//0xd1
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xd2
-    Opcode{ name:"dcp", function: dcp, address_mode: indirect_y_const, cycles: 8 },		//0xd3
-    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0xd4
-    Opcode{ name:"cmp", function: cmp, address_mode: zero_page_x, cycles: 4 },		//0xd5
-    Opcode{ name:"dec", function: dec, address_mode: zero_page_x, cycles: 6 },		//0xd6
-    Opcode{ name:"dcp", function: dcp, address_mode: zero_page_x, cycles: 6 },		//0xd7
-    Opcode{ name:"cld", function: cld, address_mode: implied, cycles: 2 },		//0xd8
-    Opcode{ name:"cmp", function: cmp, address_mode: absolute_y, cycles: 4 },		//0xd9
-    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xda
-    Opcode{ name:"dcp", function: dcp, address_mode: absolute_y_const, cycles: 7 },		//0xdb
-    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0xdc
-    Opcode{ name:"cmp", function: cmp, address_mode: absolute_x, cycles: 4 },		//0xdd
-    Opcode{ name:"dec", function: dec, address_mode: absolute_x_const, cycles: 7 },		//0xde
-    Opcode{ name:"dcp", function: dcp, address_mode: absolute_x_const, cycles: 7 },		//0xdf
-    Opcode{ name:"cpx", function: cpx, address_mode: immediate, cycles: 2 },		//0xe0
-    Opcode{ name:"sbc", function: sbc, address_mode: indirect_x, cycles: 6 },		//0xe1
-    Opcode{ name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0xe2
-    Opcode{ name:"isc", function: isc, address_mode: indirect_x, cycles: 8 },		//0xe3
-    Opcode{ name:"cpx", function: cpx, address_mode: zero_page, cycles: 3 },		//0xe4
-    Opcode{ name:"sbc", function: sbc, address_mode: zero_page, cycles: 3 },		//0xe5
-    Opcode{ name:"inc", function: inc, address_mode: zero_page, cycles: 5 },		//0xe6
-    Opcode{ name:"isc", function: isc, address_mode: zero_page, cycles: 5 },		//0xe7
-    Opcode{ name:"inx", function: inx, address_mode: implied, cycles: 2 },		//0xe8
-    Opcode{ name:"sbc", function: sbc, address_mode: immediate, cycles: 2 },		//0xe9
-    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xea
-    Opcode{ name:"sbc", function: sbc, address_mode: immediate, cycles: 2 },		//0xeb
-    Opcode{ name:"cpx", function: cpx, address_mode: absolute, cycles: 4 },		//0xec
-    Opcode{ name:"sbc", function: sbc, address_mode: absolute, cycles: 4 },		//0xed
-    Opcode{ name:"inc", function: inc, address_mode: absolute, cycles: 6 },		//0xee
-    Opcode{ name:"isc", function: isc, address_mode: absolute, cycles: 6 },		//0xef
-    Opcode{ name:"beq", function: beq, address_mode: relative, cycles: 2 },		//0xf0
-    Opcode{ name:"sbc", function: sbc, address_mode: indirect_y, cycles: 5 },		//0xf1
-    Opcode{ name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xf2
-    Opcode{ name:"isc", function: isc, address_mode: indirect_y_const, cycles: 8 },		//0xf3
-    Opcode{ name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0xf4
-    Opcode{ name:"sbc", function: sbc, address_mode: zero_page_x, cycles: 4 },		//0xf5
-    Opcode{ name:"inc", function: inc, address_mode: zero_page_x, cycles: 6 },		//0xf6
-    Opcode{ name:"isc", function: isc, address_mode: zero_page_x, cycles: 6 },		//0xf7
-    Opcode{ name:"sed", function: sed, address_mode: implied, cycles: 2 },		//0xf8
-    Opcode{ name:"sbc", function: sbc, address_mode: absolute_y, cycles: 4 },		//0xf9
-    Opcode{ name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xfa
-    Opcode{ name:"isc", function: isc, address_mode: absolute_y_const, cycles: 7 },		//0xfb
-    Opcode{ name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0xfc
-    Opcode{ name:"sbc", function: sbc, address_mode: absolute_x, cycles: 4 },		//0xfd
-    Opcode{ name:"inc", function: inc, address_mode: absolute_x_const, cycles: 7 },		//0xfe
-    Opcode{ name:"isc", function: isc, address_mode: absolute_x_const, cycles: 7 },		//0xff
+/// The table that is used to map instructions to the appropriate function and addressing mode for
+/// executing them.
+pub (super) static OPCODE_TABLE: [Instruction; 256] = [
+    Instruction { name:"brk", function: brk, address_mode: implied, cycles: 7 },		//0x0
+    Instruction { name:"ora", function: ora, address_mode: indirect_x, cycles: 6 },		//0x1
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x2
+    Instruction { name:"slo", function: slo, address_mode: indirect_x, cycles: 8 },		//0x3
+    Instruction { name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x4
+    Instruction { name:"ora", function: ora, address_mode: zero_page, cycles: 3 },		//0x5
+    Instruction { name:"asl", function: asl, address_mode: zero_page, cycles: 5 },		//0x6
+    Instruction { name:"slo", function: slo, address_mode: zero_page, cycles: 5 },		//0x7
+    Instruction { name:"php", function: php, address_mode: implied, cycles: 3 },		//0x8
+    Instruction { name:"ora", function: ora, address_mode: immediate, cycles: 2 },		//0x9
+    Instruction { name:"asl", function: asl, address_mode: implied, cycles: 2 },		//0xa
+    Instruction { name:"anc", function: anc, address_mode: immediate, cycles: 2 },		//0xb
+    Instruction { name:"nop", function: nop, address_mode: absolute, cycles: 4 },		//0xc
+    Instruction { name:"ora", function: ora, address_mode: absolute, cycles: 4 },		//0xd
+    Instruction { name:"asl", function: asl, address_mode: absolute, cycles: 6 },		//0xe
+    Instruction { name:"slo", function: slo, address_mode: absolute, cycles: 6 },		//0xf
+    Instruction { name:"bpl", function: bpl, address_mode: relative, cycles: 2 },		//0x10
+    Instruction { name:"ora", function: ora, address_mode: indirect_y, cycles: 5 },		//0x11
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x12
+    Instruction { name:"slo", function: slo, address_mode: indirect_y_const, cycles: 8 },		//0x13
+    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x14
+    Instruction { name:"ora", function: ora, address_mode: zero_page_x, cycles: 4 },		//0x15
+    Instruction { name:"asl", function: asl, address_mode: zero_page_x, cycles: 6 },		//0x16
+    Instruction { name:"slo", function: slo, address_mode: zero_page_x, cycles: 6 },		//0x17
+    Instruction { name:"clc", function: clc, address_mode: implied, cycles: 2 },		//0x18
+    Instruction { name:"ora", function: ora, address_mode: absolute_y, cycles: 4 },		//0x19
+    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x1a
+    Instruction { name:"slo", function: slo, address_mode: absolute_y_const, cycles: 7 },		//0x1b
+    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x1c
+    Instruction { name:"ora", function: ora, address_mode: absolute_x, cycles: 4 },		//0x1d
+    Instruction { name:"asl", function: asl, address_mode: absolute_x_const, cycles: 7 },		//0x1e
+    Instruction { name:"slo", function: slo, address_mode: absolute_x_const, cycles: 7 },		//0x1f
+    Instruction { name:"jsr", function: jsr, address_mode: absolute, cycles: 6 },		//0x20
+    Instruction { name:"and", function: and, address_mode: indirect_x, cycles: 6 },		//0x21
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x22
+    Instruction { name:"rla", function: rla, address_mode: indirect_x, cycles: 8 },		//0x23
+    Instruction { name:"bit", function: bit, address_mode: zero_page, cycles: 3 },		//0x24
+    Instruction { name:"and", function: and, address_mode: zero_page, cycles: 3 },		//0x25
+    Instruction { name:"rol", function: rol, address_mode: zero_page, cycles: 5 },		//0x26
+    Instruction { name:"rla", function: rla, address_mode: zero_page, cycles: 5 },		//0x27
+    Instruction { name:"plp", function: plp, address_mode: implied, cycles: 4 },		//0x28
+    Instruction { name:"and", function: and, address_mode: immediate, cycles: 2 },		//0x29
+    Instruction { name:"rol", function: rol, address_mode: implied, cycles: 2 },		//0x2a
+    Instruction { name:"anc", function: anc, address_mode: immediate, cycles: 2 },		//0x2b
+    Instruction { name:"bit", function: bit, address_mode: absolute, cycles: 4 },		//0x2c
+    Instruction { name:"and", function: and, address_mode: absolute, cycles: 4 },		//0x2d
+    Instruction { name:"rol", function: rol, address_mode: absolute, cycles: 6 },		//0x2e
+    Instruction { name:"rla", function: rla, address_mode: absolute, cycles: 6 },		//0x2f
+    Instruction { name:"bmi", function: bmi, address_mode: relative, cycles: 2 },		//0x30
+    Instruction { name:"and", function: and, address_mode: indirect_y, cycles: 5 },		//0x31
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x32
+    Instruction { name:"rla", function: rla, address_mode: indirect_y_const, cycles: 8 },		//0x33
+    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x34
+    Instruction { name:"and", function: and, address_mode: zero_page_x, cycles: 4 },		//0x35
+    Instruction { name:"rol", function: rol, address_mode: zero_page_x, cycles: 6 },		//0x36
+    Instruction { name:"rla", function: rla, address_mode: zero_page_x, cycles: 6 },		//0x37
+    Instruction { name:"sec", function: sec, address_mode: implied, cycles: 2 },		//0x38
+    Instruction { name:"and", function: and, address_mode: absolute_y, cycles: 4 },		//0x39
+    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x3a
+    Instruction { name:"rla", function: rla, address_mode: absolute_y_const, cycles: 7 },		//0x3b
+    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x3c
+    Instruction { name:"and", function: and, address_mode: absolute_x, cycles: 4 },		//0x3d
+    Instruction { name:"rol", function: rol, address_mode: absolute_x_const, cycles: 7 },		//0x3e
+    Instruction { name:"rla", function: rla, address_mode: absolute_x_const, cycles: 7 },		//0x3f
+    Instruction { name:"rti", function: rti, address_mode: implied, cycles: 6 },		//0x40
+    Instruction { name:"eor", function: eor, address_mode: indirect_x, cycles: 6 },		//0x41
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x42
+    Instruction { name:"sre", function: sre, address_mode: indirect_x, cycles: 8 },		//0x43
+    Instruction { name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x44
+    Instruction { name:"eor", function: eor, address_mode: zero_page, cycles: 3 },		//0x45
+    Instruction { name:"lsr", function: lsr, address_mode: zero_page, cycles: 5 },		//0x46
+    Instruction { name:"sre", function: sre, address_mode: zero_page, cycles: 5 },		//0x47
+    Instruction { name:"pha", function: pha, address_mode: implied, cycles: 3 },		//0x48
+    Instruction { name:"eor", function: eor, address_mode: immediate, cycles: 2 },		//0x49
+    Instruction { name:"lsr", function: lsr, address_mode: implied, cycles: 2 },		//0x4a
+    Instruction { name:"alr", function: alr, address_mode: immediate, cycles: 2 },		//0x4b
+    Instruction { name:"jmp", function: jmp, address_mode: absolute, cycles: 3 },		//0x4c
+    Instruction { name:"eor", function: eor, address_mode: absolute, cycles: 4 },		//0x4d
+    Instruction { name:"lsr", function: lsr, address_mode: absolute, cycles: 6 },		//0x4e
+    Instruction { name:"sre", function: sre, address_mode: absolute, cycles: 6 },		//0x4f
+    Instruction { name:"bvc", function: bvc, address_mode: relative, cycles: 2 },		//0x50
+    Instruction { name:"eor", function: eor, address_mode: indirect_y, cycles: 5 },		//0x51
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x52
+    Instruction { name:"sre", function: sre, address_mode: indirect_y_const, cycles: 8 },		//0x53
+    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x54
+    Instruction { name:"eor", function: eor, address_mode: zero_page_x, cycles: 4 },		//0x55
+    Instruction { name:"lsr", function: lsr, address_mode: zero_page_x, cycles: 6 },		//0x56
+    Instruction { name:"sre", function: sre, address_mode: zero_page_x, cycles: 6 },		//0x57
+    Instruction { name:"cli", function: cli, address_mode: implied, cycles: 2 },		//0x58
+    Instruction { name:"eor", function: eor, address_mode: absolute_y, cycles: 4 },		//0x59
+    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x5a
+    Instruction { name:"sre", function: sre, address_mode: absolute_y_const, cycles: 7 },		//0x5b
+    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x5c
+    Instruction { name:"eor", function: eor, address_mode: absolute_x, cycles: 4 },		//0x5d
+    Instruction { name:"lsr", function: lsr, address_mode: absolute_x_const, cycles: 7 },		//0x5e
+    Instruction { name:"sre", function: sre, address_mode: absolute_x_const, cycles: 7 },		//0x5f
+    Instruction { name:"rts", function: rts, address_mode: implied, cycles: 6 },		//0x60
+    Instruction { name:"adc", function: adc, address_mode: indirect_x, cycles: 6 },		//0x61
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x62
+    Instruction { name:"rra", function: rra, address_mode: indirect_x, cycles: 8 },		//0x63
+    Instruction { name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x64
+    Instruction { name:"adc", function: adc, address_mode: zero_page, cycles: 3 },		//0x65
+    Instruction { name:"ror", function: ror, address_mode: zero_page, cycles: 5 },		//0x66
+    Instruction { name:"rra", function: rra, address_mode: zero_page, cycles: 5 },		//0x67
+    Instruction { name:"pla", function: pla, address_mode: implied, cycles: 4 },		//0x68
+    Instruction { name:"adc", function: adc, address_mode: immediate, cycles: 2 },		//0x69
+    Instruction { name:"ror", function: ror, address_mode: implied, cycles: 2 },		//0x6a
+    Instruction { name:"arr", function: arr, address_mode: immediate, cycles: 2 },		//0x6b
+    Instruction { name:"jmp", function: jmp, address_mode: indirect, cycles: 5 },		//0x6c
+    Instruction { name:"adc", function: adc, address_mode: absolute, cycles: 4 },		//0x6d
+    Instruction { name:"ror", function: ror, address_mode: absolute, cycles: 6 },		//0x6e
+    Instruction { name:"rra", function: rra, address_mode: absolute, cycles: 6 },		//0x6f
+    Instruction { name:"bvs", function: bvs, address_mode: relative, cycles: 2 },		//0x70
+    Instruction { name:"adc", function: adc, address_mode: indirect_y, cycles: 5 },		//0x71
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x72
+    Instruction { name:"rra", function: rra, address_mode: indirect_y_const, cycles: 8 },		//0x73
+    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x74
+    Instruction { name:"adc", function: adc, address_mode: zero_page_x, cycles: 4 },		//0x75
+    Instruction { name:"ror", function: ror, address_mode: zero_page_x, cycles: 6 },		//0x76
+    Instruction { name:"rra", function: rra, address_mode: zero_page_x, cycles: 6 },		//0x77
+    Instruction { name:"sei", function: sei, address_mode: implied, cycles: 2 },		//0x78
+    Instruction { name:"adc", function: adc, address_mode: absolute_y, cycles: 4 },		//0x79
+    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x7a
+    Instruction { name:"rra", function: rra, address_mode: absolute_y_const, cycles: 7 },		//0x7b
+    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x7c
+    Instruction { name:"adc", function: adc, address_mode: absolute_x, cycles: 4 },		//0x7d
+    Instruction { name:"ror", function: ror, address_mode: absolute_x_const, cycles: 7 },		//0x7e
+    Instruction { name:"rra", function: rra, address_mode: absolute_x_const, cycles: 7 },		//0x7f
+    Instruction { name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x80
+    Instruction { name:"sta", function: sta, address_mode: indirect_x, cycles: 6 },		//0x81
+    Instruction { name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x82
+    Instruction { name:"sax", function: sax, address_mode: indirect_x, cycles: 6 },		//0x83
+    Instruction { name:"sty", function: sty, address_mode: zero_page, cycles: 3 },		//0x84
+    Instruction { name:"sta", function: sta, address_mode: zero_page, cycles: 3 },		//0x85
+    Instruction { name:"stx", function: stx, address_mode: zero_page, cycles: 3 },		//0x86
+    Instruction { name:"sax", function: sax, address_mode: zero_page, cycles: 3 },		//0x87
+    Instruction { name:"dey", function: dey, address_mode: implied, cycles: 2 },		//0x88
+    Instruction { name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x89
+    Instruction { name:"txa", function: txa, address_mode: implied, cycles: 2 },		//0x8a
+    Instruction { name:"xaa", function: xaa, address_mode: immediate, cycles: 2 },		//0x8b
+    Instruction { name:"sty", function: sty, address_mode: absolute, cycles: 4 },		//0x8c
+    Instruction { name:"sta", function: sta, address_mode: absolute, cycles: 4 },		//0x8d
+    Instruction { name:"stx", function: stx, address_mode: absolute, cycles: 4 },		//0x8e
+    Instruction { name:"sax", function: sax, address_mode: absolute, cycles: 4 },		//0x8f
+    Instruction { name:"bcc", function: bcc, address_mode: relative, cycles: 2 },		//0x90
+    Instruction { name:"sta", function: sta, address_mode: indirect_y, cycles: 6 },		//0x91
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x92
+    Instruction { name:"ahx", function: ahx, address_mode: indirect_y, cycles: 6 },		//0x93
+    Instruction { name:"sty", function: sty, address_mode: zero_page_x, cycles: 4 },		//0x94
+    Instruction { name:"sta", function: sta, address_mode: zero_page_x, cycles: 4 },		//0x95
+    Instruction { name:"stx", function: stx, address_mode: zero_page_y, cycles: 4 },		//0x96
+    Instruction { name:"sax", function: sax, address_mode: zero_page_y, cycles: 4 },		//0x97
+    Instruction { name:"tya", function: tya, address_mode: implied, cycles: 2 },		//0x98
+    Instruction { name:"sta", function: sta, address_mode: absolute_y_const, cycles: 5 },		//0x99
+    Instruction { name:"txs", function: txs, address_mode: implied, cycles: 2 },		//0x9a
+    Instruction { name:"tas", function: tas, address_mode: absolute_y, cycles: 5 },		//0x9b
+    Instruction { name:"shy", function: shy, address_mode: absolute_x, cycles: 5 },		//0x9c
+    Instruction { name:"sta", function: sta, address_mode: absolute_x_const, cycles: 5 },		//0x9d
+    Instruction { name:"shx", function: shx, address_mode: absolute_y, cycles: 5 },		//0x9e
+    Instruction { name:"ahx", function: ahx, address_mode: absolute_y, cycles: 5 },		//0x9f
+    Instruction { name:"ldy", function: ldy, address_mode: immediate, cycles: 2 },		//0xa0
+    Instruction { name:"lda", function: lda, address_mode: indirect_x, cycles: 6 },		//0xa1
+    Instruction { name:"ldx", function: ldx, address_mode: immediate, cycles: 2 },		//0xa2
+    Instruction { name:"lax", function: lax, address_mode: indirect_x, cycles: 6 },		//0xa3
+    Instruction { name:"ldy", function: ldy, address_mode: zero_page, cycles: 3 },		//0xa4
+    Instruction { name:"lda", function: lda, address_mode: zero_page, cycles: 3 },		//0xa5
+    Instruction { name:"ldx", function: ldx, address_mode: zero_page, cycles: 3 },		//0xa6
+    Instruction { name:"lax", function: lax, address_mode: zero_page, cycles: 3 },		//0xa7
+    Instruction { name:"tay", function: tay, address_mode: implied, cycles: 2 },		//0xa8
+    Instruction { name:"lda", function: lda, address_mode: immediate, cycles: 2 },		//0xa9
+    Instruction { name:"tax", function: tax, address_mode: implied, cycles: 2 },		//0xaa
+    Instruction { name:"lax", function: lax, address_mode: immediate, cycles: 2 },		//0xab
+    Instruction { name:"ldy", function: ldy, address_mode: absolute, cycles: 4 },		//0xac
+    Instruction { name:"lda", function: lda, address_mode: absolute, cycles: 4 },		//0xad
+    Instruction { name:"ldx", function: ldx, address_mode: absolute, cycles: 4 },		//0xae
+    Instruction { name:"lax", function: lax, address_mode: absolute, cycles: 4 },		//0xaf
+    Instruction { name:"bcs", function: bcs, address_mode: relative, cycles: 2 },		//0xb0
+    Instruction { name:"lda", function: lda, address_mode: indirect_y, cycles: 5 },		//0xb1
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xb2
+    Instruction { name:"lax", function: lax, address_mode: indirect_y, cycles: 5 },		//0xb3
+    Instruction { name:"ldy", function: ldy, address_mode: zero_page_x, cycles: 4 },		//0xb4
+    Instruction { name:"lda", function: lda, address_mode: zero_page_x, cycles: 4 },		//0xb5
+    Instruction { name:"ldx", function: ldx, address_mode: zero_page_y, cycles: 4 },		//0xb6
+    Instruction { name:"lax", function: lax, address_mode: zero_page_y, cycles: 4 },		//0xb7
+    Instruction { name:"clv", function: clv, address_mode: implied, cycles: 2 },		//0xb8
+    Instruction { name:"lda", function: lda, address_mode: absolute_y, cycles: 4 },		//0xb9
+    Instruction { name:"tsx", function: tsx, address_mode: implied, cycles: 2 },		//0xba
+    Instruction { name:"las", function: las, address_mode: absolute_y, cycles: 4 },		//0xbb
+    Instruction { name:"ldy", function: ldy, address_mode: absolute_x, cycles: 4 },		//0xbc
+    Instruction { name:"lda", function: lda, address_mode: absolute_x, cycles: 4 },		//0xbd
+    Instruction { name:"ldx", function: ldx, address_mode: absolute_y, cycles: 4 },		//0xbe
+    Instruction { name:"lax", function: lax, address_mode: absolute_y, cycles: 4 },		//0xbf
+    Instruction { name:"cpy", function: cpy, address_mode: immediate, cycles: 2 },		//0xc0
+    Instruction { name:"cmp", function: cmp, address_mode: indirect_x, cycles: 6 },		//0xc1
+    Instruction { name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0xc2
+    Instruction { name:"dcp", function: dcp, address_mode: indirect_x, cycles: 8 },		//0xc3
+    Instruction { name:"cpy", function: cpy, address_mode: zero_page, cycles: 3 },		//0xc4
+    Instruction { name:"cmp", function: cmp, address_mode: zero_page, cycles: 3 },		//0xc5
+    Instruction { name:"dec", function: dec, address_mode: zero_page, cycles: 5 },		//0xc6
+    Instruction { name:"dcp", function: dcp, address_mode: zero_page, cycles: 5 },		//0xc7
+    Instruction { name:"iny", function: iny, address_mode: implied, cycles: 2 },		//0xc8
+    Instruction { name:"cmp", function: cmp, address_mode: immediate, cycles: 2 },		//0xc9
+    Instruction { name:"dex", function: dex, address_mode: implied, cycles: 2 },		//0xca
+    Instruction { name:"axs", function: axs, address_mode: immediate, cycles: 2 },		//0xcb
+    Instruction { name:"cpy", function: cpy, address_mode: absolute, cycles: 4 },		//0xcc
+    Instruction { name:"cmp", function: cmp, address_mode: absolute, cycles: 4 },		//0xcd
+    Instruction { name:"dec", function: dec, address_mode: absolute, cycles: 6 },		//0xce
+    Instruction { name:"dcp", function: dcp, address_mode: absolute, cycles: 6 },		//0xcf
+    Instruction { name:"bne", function: bne, address_mode: relative, cycles: 2 },		//0xd0
+    Instruction { name:"cmp", function: cmp, address_mode: indirect_y, cycles: 5 },		//0xd1
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xd2
+    Instruction { name:"dcp", function: dcp, address_mode: indirect_y_const, cycles: 8 },		//0xd3
+    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0xd4
+    Instruction { name:"cmp", function: cmp, address_mode: zero_page_x, cycles: 4 },		//0xd5
+    Instruction { name:"dec", function: dec, address_mode: zero_page_x, cycles: 6 },		//0xd6
+    Instruction { name:"dcp", function: dcp, address_mode: zero_page_x, cycles: 6 },		//0xd7
+    Instruction { name:"cld", function: cld, address_mode: implied, cycles: 2 },		//0xd8
+    Instruction { name:"cmp", function: cmp, address_mode: absolute_y, cycles: 4 },		//0xd9
+    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xda
+    Instruction { name:"dcp", function: dcp, address_mode: absolute_y_const, cycles: 7 },		//0xdb
+    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0xdc
+    Instruction { name:"cmp", function: cmp, address_mode: absolute_x, cycles: 4 },		//0xdd
+    Instruction { name:"dec", function: dec, address_mode: absolute_x_const, cycles: 7 },		//0xde
+    Instruction { name:"dcp", function: dcp, address_mode: absolute_x_const, cycles: 7 },		//0xdf
+    Instruction { name:"cpx", function: cpx, address_mode: immediate, cycles: 2 },		//0xe0
+    Instruction { name:"sbc", function: sbc, address_mode: indirect_x, cycles: 6 },		//0xe1
+    Instruction { name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0xe2
+    Instruction { name:"isc", function: isc, address_mode: indirect_x, cycles: 8 },		//0xe3
+    Instruction { name:"cpx", function: cpx, address_mode: zero_page, cycles: 3 },		//0xe4
+    Instruction { name:"sbc", function: sbc, address_mode: zero_page, cycles: 3 },		//0xe5
+    Instruction { name:"inc", function: inc, address_mode: zero_page, cycles: 5 },		//0xe6
+    Instruction { name:"isc", function: isc, address_mode: zero_page, cycles: 5 },		//0xe7
+    Instruction { name:"inx", function: inx, address_mode: implied, cycles: 2 },		//0xe8
+    Instruction { name:"sbc", function: sbc, address_mode: immediate, cycles: 2 },		//0xe9
+    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xea
+    Instruction { name:"sbc", function: sbc, address_mode: immediate, cycles: 2 },		//0xeb
+    Instruction { name:"cpx", function: cpx, address_mode: absolute, cycles: 4 },		//0xec
+    Instruction { name:"sbc", function: sbc, address_mode: absolute, cycles: 4 },		//0xed
+    Instruction { name:"inc", function: inc, address_mode: absolute, cycles: 6 },		//0xee
+    Instruction { name:"isc", function: isc, address_mode: absolute, cycles: 6 },		//0xef
+    Instruction { name:"beq", function: beq, address_mode: relative, cycles: 2 },		//0xf0
+    Instruction { name:"sbc", function: sbc, address_mode: indirect_y, cycles: 5 },		//0xf1
+    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xf2
+    Instruction { name:"isc", function: isc, address_mode: indirect_y_const, cycles: 8 },		//0xf3
+    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0xf4
+    Instruction { name:"sbc", function: sbc, address_mode: zero_page_x, cycles: 4 },		//0xf5
+    Instruction { name:"inc", function: inc, address_mode: zero_page_x, cycles: 6 },		//0xf6
+    Instruction { name:"isc", function: isc, address_mode: zero_page_x, cycles: 6 },		//0xf7
+    Instruction { name:"sed", function: sed, address_mode: implied, cycles: 2 },		//0xf8
+    Instruction { name:"sbc", function: sbc, address_mode: absolute_y, cycles: 4 },		//0xf9
+    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xfa
+    Instruction { name:"isc", function: isc, address_mode: absolute_y_const, cycles: 7 },		//0xfb
+    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0xfc
+    Instruction { name:"sbc", function: sbc, address_mode: absolute_x, cycles: 4 },		//0xfd
+    Instruction { name:"inc", function: inc, address_mode: absolute_x_const, cycles: 7 },		//0xfe
+    Instruction { name:"isc", function: isc, address_mode: absolute_x_const, cycles: 7 },		//0xff
 ];
 
-///ADC: Adds a value and the carry bit to the accumulator
+/// ADC: Adds a value and the carry bit to the accumulator
 fn adc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         let value = bus.read(address);
@@ -330,8 +337,8 @@ fn adc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///AND: Performs a logical and with the accumulator and the addressed value, storing the result
-///     in the accumulator
+/// AND: Performs a logical and with the accumulator and the addressed value, storing the result
+/// in the accumulator
 fn and(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         let value = bus.read(address);
@@ -344,7 +351,7 @@ fn and(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///ASL: Performs a left bit shift on the addressed value or accumulator
+/// ASL: Performs a left bit shift on the addressed value or accumulator
 fn asl(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     //Wrapped local function to handle both cases
     fn asl_wrapped(cpu: &mut MOS6502, value: u8) -> u8 {
@@ -368,22 +375,22 @@ fn asl(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///BCC: Branch if the carry bit is clear
+/// BCC: Branch if the carry bit is clear
 fn bcc(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     return branch(cpu, !cpu.get_flag(StatusFlag::Carry), address_mode_value);
 }
 
-///BCC: Branch if the carry bit is set
+/// BCC: Branch if the carry bit is set
 fn bcs(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     return branch(cpu, cpu.get_flag(StatusFlag::Carry), address_mode_value);
 }
 
-///BEQ: Branch if the zero bit is set (branch if equal)
+/// BEQ: Branch if the zero bit is set (branch if equal)
 fn beq(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     return branch(cpu, cpu.get_flag(StatusFlag::Zero), address_mode_value);
 }
 
-///BIT: Uses the accumulator as a mask pattern to test the bits of a given memory location
+/// BIT: Uses the accumulator as a mask pattern to test the bits of a given memory location
 fn bit(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         let value = bus.read(address);
@@ -395,22 +402,22 @@ fn bit(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///BMI: Branch if the negative bit is set (branch if negative)
+/// BMI: Branch if the negative bit is set (branch if negative)
 fn bmi(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     return branch(cpu, cpu.get_flag(StatusFlag::Negative), address_mode_value);
 }
 
-///BNE: Branch if the zero bit is clear (branch if not equal)
+/// BNE: Branch if the zero bit is clear (branch if not equal)
 fn bne(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     return branch(cpu, !cpu.get_flag(StatusFlag::Zero), address_mode_value);
 }
 
-///BPL: Branch if the negative bit is clear (branch if positive)
+/// BPL: Branch if the negative bit is clear (branch if positive)
 fn bpl(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     return branch(cpu, !cpu.get_flag(StatusFlag::Negative), address_mode_value);
 }
 
-///BRK: Force an interrupt
+/// BRK: Force an interrupt
 fn brk(cpu: &mut MOS6502, bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     //Increase program counter by 1 so it returns to the correct place
     cpu.push_stack_16(bus, cpu.program_counter + 1);
@@ -420,52 +427,52 @@ fn brk(cpu: &mut MOS6502, bus: &mut dyn Interface6502, _address_mode_value: Addr
     cpu.program_counter = super::read_16(bus, super::IRQ_ADDRESS_LOCATION);
 }
 
-///BVC: Branch if the overflow bit is clear
+/// BVC: Branch if the overflow bit is clear
 fn bvc(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     return branch(cpu, !cpu.get_flag(StatusFlag::Overflow), address_mode_value);
 }
 
-///BVS: Branch if the overflow bit is set
+/// BVS: Branch if the overflow bit is set
 fn bvs(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     return branch(cpu, cpu.get_flag(StatusFlag::Overflow), address_mode_value);
 }
 
-///CLC: Clear carry bit
+/// CLC: Clear carry bit
 fn clc(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.set_flag(StatusFlag::Carry, false);
 }
 
-///CLD: Clear decimal mode bit
+/// CLD: Clear decimal mode bit
 fn cld(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.set_flag(StatusFlag::Decimal, false);
 }
 
-///CLD: Clear interrupt disable bit
+/// CLD: Clear interrupt disable bit
 fn cli(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.set_flag(StatusFlag::InterruptDisable, false);
 }
 
-///CLD: Clear overflow bit
+/// CLD: Clear overflow bit
 fn clv(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.set_flag(StatusFlag::Overflow, false);
 }
 
-///CMP: Compare accumulator to a value in memory
+/// CMP: Compare accumulator to a value in memory
 fn cmp(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     compare(cpu, bus, cpu.accumulator, address_mode_value);
 }
 
-///CPX: Compare x register to a value in memory
+/// CPX: Compare x register to a value in memory
 fn cpx(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     compare(cpu, bus, cpu.x_register, address_mode_value);
 }
 
-///CPY: Compare y register to a value in memory
+/// CPY: Compare y register to a value in memory
 fn cpy(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     compare(cpu, bus, cpu.y_register, address_mode_value);
 }
 
-///DEC: Subtract one from the value at the given memory location
+/// DEC: Subtract one from the value at the given memory location
 fn dec(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         let value = bus.read(address).wrapping_sub(1);
@@ -477,7 +484,7 @@ fn dec(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///DEX: Subtract one from the x register
+/// DEX: Subtract one from the x register
 fn dex(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::Implied = address_mode_value {
         cpu.x_register = cpu.x_register.wrapping_sub(1);
@@ -488,7 +495,7 @@ fn dex(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: Addr
     }
 }
 
-///DEY: Subtract one from the y register
+/// DEY: Subtract one from the y register
 fn dey(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::Implied = address_mode_value {
         cpu.y_register = cpu.y_register.wrapping_sub(1);
@@ -499,7 +506,7 @@ fn dey(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: Addr
     }
 }
 
-///EOR: Set accumulator to the result of an exclusive or operation with the accumulator and a value from memory
+/// EOR: Set accumulator to the result of an exclusive or operation with the accumulator and a value from memory
 fn eor(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         let value = bus.read(address);
@@ -512,7 +519,7 @@ fn eor(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///INC: Add one to the value at the given memory location
+/// INC: Add one to the value at the given memory location
 fn inc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         let value = bus.read(address).wrapping_add(1);
@@ -524,7 +531,7 @@ fn inc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///INX: Add one to the x register
+/// INX: Add one to the x register
 fn inx(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::Implied = address_mode_value {
         cpu.x_register = cpu.x_register.wrapping_add(1);
@@ -535,7 +542,7 @@ fn inx(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: Addr
     }
 }
 
-///INX: Add one to the y register
+/// INX: Add one to the y register
 fn iny(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::Implied = address_mode_value {
         cpu.y_register = cpu.y_register.wrapping_add(1);
@@ -546,7 +553,7 @@ fn iny(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: Addr
     }
 }
 
-///JMP: Set the program counter to the given address
+/// JMP: Set the program counter to the given address
 fn jmp(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         cpu.program_counter = address;
@@ -555,7 +562,7 @@ fn jmp(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, address_mode_value: Addr
     }
 }
 
-///JSR: Puts the current program counter value on the stack and then jumps to the given address
+/// JSR: Puts the current program counter value on the stack and then jumps to the given address
 fn jsr(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         cpu.push_stack_16(bus, cpu.program_counter - 1);
@@ -565,7 +572,7 @@ fn jsr(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///LDA: Load a value into the accumulator from a memory address
+/// LDA: Load a value into the accumulator from a memory address
 //TODO: Come up with a way of sharing code across load opcodes
 fn lda(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
@@ -577,7 +584,7 @@ fn lda(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///LDX: Load a value into the x register from a memory address
+/// LDX: Load a value into the x register from a memory address
 fn ldx(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         cpu.x_register = bus.read(address);
@@ -588,7 +595,7 @@ fn ldx(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///LDY: Load a value into the y register from a memory address
+/// LDY: Load a value into the y register from a memory address
 fn ldy(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         cpu.y_register = bus.read(address);
@@ -599,7 +606,7 @@ fn ldy(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///LSR: Performs a right bit shift on the given value
+/// LSR: Performs a right bit shift on the given value
 fn lsr(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     //Wrapped local function to handle both cases
     fn lsr_wrapped(cpu: &mut MOS6502, value: u8) -> u8 {
@@ -623,11 +630,11 @@ fn lsr(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///NOP: No operation
+/// NOP: No operation
 fn nop(_cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
 }
 
-///ORA: The accumulator is set to the result of a inclusive or operation applied to the accumulator and a memory value
+/// ORA: The accumulator is set to the result of a inclusive or operation applied to the accumulator and a memory value
 fn ora(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         let value = bus.read(address);
@@ -640,33 +647,33 @@ fn ora(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///PHA: Push the value of the accumulator onto the stack
+/// PHA: Push the value of the accumulator onto the stack
 fn pha(cpu: &mut MOS6502, bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.push_stack(bus, cpu.accumulator);
 }
 
-///PHP: Push the value of the status byte onto the stack
+/// PHP: Push the value of the status byte onto the stack
 fn php(cpu: &mut MOS6502, bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     let status = cpu.status_register;
     // PHP sets both Break flags, but only to the version of the flags pushed onto the stack
     cpu.push_stack(bus, status | StatusFlag::Break as u8);
 }
 
-///PLA: Sets the accumulator to a value popped off the top of the stack
+/// PLA: Sets the accumulator to a value popped off the top of the stack
 fn pla(cpu: &mut MOS6502, bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.accumulator = cpu.pop_stack(bus);
     cpu.set_flag(StatusFlag::Negative, cpu.accumulator & StatusFlag::Negative as u8 > 0);
     cpu.set_flag(StatusFlag::Zero, cpu.accumulator == 0);
 }
 
-///PLP: Sets the status byte to a value popped off the top of the stack
+/// PLP: Sets the status byte to a value popped off the top of the stack
 fn plp(cpu: &mut MOS6502, bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     let status = cpu.pop_stack(bus);
     // Set all the flags except the Break flags, which remain as they were
     cpu.status_register = (cpu.status_register & (StatusFlag::Break as u8)) | (status & !(StatusFlag::Break as u8));
 }
 
-///ROL: Rotate the bits of the given value to the left
+/// ROL: Rotate the bits of the given value to the left
 fn rol(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     //Wrapped local function to handle both cases
     fn rol_wrapped(cpu: &mut MOS6502, value: u8) -> u8 {
@@ -691,7 +698,7 @@ fn rol(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///ROR: Rotate the bits of the given value to the right
+/// ROR: Rotate the bits of the given value to the right
 fn ror(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     //Wrapped local function to handle both cases
     fn ror_wrapped(cpu: &mut MOS6502, value: u8) -> u8 {
@@ -716,14 +723,14 @@ fn ror(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///RTI: Returns from an interrupt, reversing the operations performed by the BRK instruction
+/// RTI: Returns from an interrupt, reversing the operations performed by the BRK instruction
 fn rti(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     // Reuse other paths
     plp(cpu, bus, address_mode_value);
     cpu.program_counter = cpu.pop_stack_16(bus);
 }
 
-///RTS: Returns from a subroutine, taking the value of the program counter from the stack
+/// RTS: Returns from a subroutine, taking the value of the program counter from the stack
 fn rts(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::Implied = address_mode_value {
         cpu.program_counter = cpu.pop_stack_16(bus) + 1;
@@ -732,16 +739,16 @@ fn rts(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///SBC: Subtracts a value and the opposite of the carry bit from the accumulator
-/// CARRY FLAG IS EXPECTED TO BE SET FOR ONE OFF SUBTRACTION
-//TODO: Investigate how to reuse more of the adc code
+/// SBC: Subtracts a value and the opposite of the carry bit from the accumulator.
+/// The carry flag is expected to be set for one off subtraction.
+// TODO: Investigate how to reuse more of the adc code
 fn sbc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         let value = !bus.read(address);
         let result: u16;
 
-        //Only run if the CPU is not built in NES mode
-        //TODO: Make sure cpu is removed as dead code in nes builds
+        // Only run if the CPU is not built in NES mode
+        // TODO: Make sure cpu is removed as dead code in nes builds
         if cfg!(feature = "binary_coded_decimal") && cpu.get_flag(StatusFlag::Decimal) {
             let mut sum = cpu.accumulator.wrapping_add(value).wrapping_add(cpu.get_flag(StatusFlag::Carry) as u8);
             if (cpu.accumulator & 0x0f) + (value & 0x0f) + cpu.get_flag(StatusFlag::Carry) as u8 > 0x09 {
@@ -756,13 +763,13 @@ fn sbc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
             result = u16::from(sum);
         } else {
             result = u16::from(cpu.accumulator) + u16::from(value) + cpu.get_flag(StatusFlag::Carry) as u16;
-            //Set the Carry flag for chain adding multi byte numbers
+            // Set the Carry flag for chain adding multi byte numbers
             cpu.set_flag(StatusFlag::Carry, result > u16::from(u8::max_value()));
         }
         cpu.set_flag(StatusFlag::Zero, result as u8 == 0);
-        //Set the Overflow flag if a signed overflow has occurred
+        // Set the Overflow flag if a signed overflow has occurred
         cpu.set_flag(StatusFlag::Overflow, (!(cpu.accumulator ^ value) & (cpu.accumulator ^ result as u8) & StatusFlag::Negative as u8) > 0);
-        //Negative flag is in bit 7, so it can be used to test if the result is negative, because a negative value will also have a 1 in bit 7
+        // Negative flag is in bit 7, so it can be used to test if the result is negative, because a negative value will also have a 1 in bit 7
         cpu.set_flag(StatusFlag::Negative, result as u8 & StatusFlag::Negative as u8 > 0);
         cpu.accumulator = result as u8;
     } else {
@@ -770,22 +777,22 @@ fn sbc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///SEC: Sets the carry bit to one
+/// SEC: Sets the carry bit to one
 fn sec(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.set_flag(StatusFlag::Carry, true);
 }
 
-///SED: Sets the decimal bit to one
+/// SED: Sets the decimal bit to one
 fn sed(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.set_flag(StatusFlag::Decimal, true);
 }
 
-///SEI: Sets the interrupt disable bit to one
+/// SEI: Sets the interrupt disable bit to one
 fn sei(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.set_flag(StatusFlag::InterruptDisable, true);
 }
 
-///STA: Store the accumulator in the given memory address
+/// STA: Store the accumulator in the given memory address
 fn sta(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         bus.write(address, cpu.accumulator);
@@ -794,7 +801,7 @@ fn sta(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///STX: Store the x register in the given memory address
+/// STX: Store the x register in the given memory address
 fn stx(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         bus.write(address, cpu.x_register);
@@ -803,7 +810,7 @@ fn stx(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///STY: Store the y register in the given memory address
+/// STY: Store the y register in the given memory address
 fn sty(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         bus.write(address, cpu.y_register);
@@ -812,40 +819,40 @@ fn sty(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
     }
 }
 
-///TAX: Transfer the accumulator into the x register
+/// TAX: Transfer the accumulator into the x register
 fn tax(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.x_register = cpu.accumulator;
     cpu.set_flag(StatusFlag::Negative, cpu.x_register & StatusFlag::Negative as u8 > 0);
     cpu.set_flag(StatusFlag::Zero, cpu.x_register == 0);
 }
 
-///TAY: Transfer the accumulator into the y register
+/// TAY: Transfer the accumulator into the y register
 fn tay(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.y_register = cpu.accumulator;
     cpu.set_flag(StatusFlag::Negative, cpu.y_register & StatusFlag::Negative as u8 > 0);
     cpu.set_flag(StatusFlag::Zero, cpu.y_register == 0);
 }
 
-///TSS: Transfer the stack pointer into the x register
+/// TSS: Transfer the stack pointer into the x register
 fn tsx(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.x_register = cpu.stack_pointer;
     cpu.set_flag(StatusFlag::Negative, cpu.x_register & StatusFlag::Negative as u8 > 0);
     cpu.set_flag(StatusFlag::Zero, cpu.x_register == 0);
 }
 
-///TXA: Transfer the x register into the accumulator
+/// TXA: Transfer the x register into the accumulator
 fn txa(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.accumulator = cpu.x_register;
     cpu.set_flag(StatusFlag::Negative, cpu.accumulator & StatusFlag::Negative as u8 > 0);
     cpu.set_flag(StatusFlag::Zero, cpu.accumulator == 0);
 }
 
-///TXS: Transfer the x register into the stack pointer
+/// TXS: Transfer the x register into the stack pointer
 fn txs(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.stack_pointer = cpu.x_register;
 }
 
-///TYA: Transfer the y register into the accumulator
+/// TYA: Transfer the y register into the accumulator
 fn tya(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
     cpu.accumulator = cpu.y_register;
     cpu.set_flag(StatusFlag::Negative, cpu.y_register & StatusFlag::Negative as u8 > 0);
@@ -854,7 +861,7 @@ fn tya(cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: Add
 
 //HELPERS------------------------------------------------------------------------------------------
 
-///Function to convert a byte to a u16 when the value is signed
+/// Function to convert a byte to a u16 when the value is signed
 fn signed_8_bit_to_16(value: u8) -> u16 {
     let mut value = u16::from(value);
     if value & 0x80 > 0 {
@@ -863,7 +870,7 @@ fn signed_8_bit_to_16(value: u8) -> u16 {
     return value;
 }
 
-///General purpose function for branch opcodes
+/// General purpose function for branch opcodes
 fn branch(cpu: &mut MOS6502, branch_condition: bool, address_mode_value: AddressModeValue) {
     if let AddressModeValue::RelativeAddress(relative_address) = address_mode_value {
         let address = signed_8_bit_to_16(relative_address).wrapping_add(cpu.program_counter);
@@ -881,7 +888,7 @@ fn branch(cpu: &mut MOS6502, branch_condition: bool, address_mode_value: Address
     }
 }
 
-///General purpose function for comparison opcodes
+/// General purpose function for comparison opcodes
 fn compare(cpu: &mut MOS6502, bus: &mut dyn Interface6502, register: u8, address_mode_value: AddressModeValue) -> u8 {
     if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
         let value = bus.read(address);
@@ -895,7 +902,7 @@ fn compare(cpu: &mut MOS6502, bus: &mut dyn Interface6502, register: u8, address
     }
 }
 
-//TESTS--------------------------------------------------------------------------------------------
+// TESTS--------------------------------------------------------------------------------------------
 
 #[cfg(test)]
 mod test {
