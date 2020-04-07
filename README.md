@@ -1,6 +1,6 @@
 # emulator_6502
 
-[![Build Status](https://travis-ci.com/GarettCooper/6502-emulator.svg)](https://travis-ci.com/GarettCooper/6502-emulator)
+[![Build Status](https://travis-ci.com/GarettCooper/6502-emulator.svg)](https://travis-ci.com/GarettCooper/emulator_6502)
 [![Crate](https://img.shields.io/crates/v/emulator_6502.svg)](https://crates.io/crates/emulator_6502)
 [![Documentation](https://docs.rs/emulator_6502/badge.svg)](https://docs.rs/emulator_6502)
 
