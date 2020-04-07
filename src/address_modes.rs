@@ -88,7 +88,7 @@ pub(crate) fn indirect(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addres
 
     // Simulate bug at page edge
     let page = indirect_address & 0xff00;
-    let address =  (u16::from(bus.read(page | ((indirect_address + 1) & 0xff))) <<  8) | u16::from(bus.read(indirect_address));
+    let address = (u16::from(bus.read(page | ((indirect_address + 1) & 0xff))) << 8) | u16::from(bus.read(indirect_address));
 
     cpu.program_counter += 2;
     return AddressModeValue::AbsoluteAddress(address);
@@ -99,8 +99,8 @@ pub(crate) fn indirect_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
     let indirect_address = bus.read(cpu.program_counter);
 
     // Simulate bug at page edge
-    let address = ((bus.read(indirect_address.wrapping_add(cpu.x_register).wrapping_add(1) as u16) as u16) << 8 ) |
-        bus.read(indirect_address.wrapping_add(cpu.x_register) as u16) as u16;
+    let address = ((bus.read(indirect_address.wrapping_add(cpu.x_register).wrapping_add(1) as u16) as u16) << 8)
+        | bus.read(indirect_address.wrapping_add(cpu.x_register) as u16) as u16;
 
     cpu.program_counter += 1;
     return AddressModeValue::AbsoluteAddress(address);
@@ -110,8 +110,7 @@ pub(crate) fn indirect_x(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
 pub(crate) fn indirect_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let indirect_address = bus.read(cpu.program_counter);
     // Simulate bug at page edge
-    let address = ((bus.read(indirect_address.wrapping_add(1) as u16) as u16) << 8 ) |
-        bus.read(indirect_address as u16) as u16;
+    let address = ((bus.read(indirect_address.wrapping_add(1) as u16) as u16) << 8) | bus.read(indirect_address as u16) as u16;
     let offset_address = address.wrapping_add(u16::from(cpu.y_register));
 
     cpu.remaining_cycles += if (offset_address) & 0xff00 != address & 0xff00 {
@@ -131,8 +130,7 @@ pub(crate) fn indirect_y(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> Addr
 pub(crate) fn indirect_y_const(cpu: &mut MOS6502, bus: &mut dyn Interface6502) -> AddressModeValue {
     let indirect_address = bus.read(cpu.program_counter);
     // Simulate bug at page edge
-    let address = ((bus.read(indirect_address.wrapping_add(1) as u16) as u16) << 8 ) |
-        bus.read(indirect_address as u16) as u16;
+    let address = ((bus.read(indirect_address.wrapping_add(1) as u16) as u16) << 8) | bus.read(indirect_address as u16) as u16;
     let offset_address = address.wrapping_add(u16::from(cpu.y_register));
 
     cpu.program_counter += 1;
@@ -192,13 +190,16 @@ impl fmt::Debug for AddressModeValue {
 #[cfg(test)]
 mod test {
     #![allow(unused_variables, unused_mut)] //Allow some warnings for test code
-    use crate::test_utilities::StubInterface6502;
     use super::*;
+    use crate::test_utilities::StubInterface6502;
 
     #[test]
     fn test_absolute() {
         let mut cpu = MOS6502::new_start(0x0000);
-        let mut bus = StubInterface6502::new(|address, read_count| 0xff, |address, data, write_count| panic!("Write function was called"));
+        let mut bus = StubInterface6502::new(
+            |address, read_count| 0xff,
+            |address, data, write_count| panic!("Write function was called"),
+        );
 
         let expected_program_counter = cpu.program_counter + 2;
         let address_mode_value = absolute(&mut cpu, &mut bus);
@@ -211,7 +212,10 @@ mod test {
     #[test]
     fn test_absolute_x() {
         let mut cpu = MOS6502::new_start(0x0000);
-        let mut bus = StubInterface6502::new(|address, read_count| 0x00, |address, data, write_count| panic!("Write function was called"));
+        let mut bus = StubInterface6502::new(
+            |address, read_count| 0x00,
+            |address, data, write_count| panic!("Write function was called"),
+        );
         cpu.x_register = 2;
         let expected_program_counter = cpu.program_counter + 2;
         let address_mode_value = absolute_x(&mut cpu, &mut bus);
@@ -224,7 +228,10 @@ mod test {
     #[test]
     fn test_absolute_x_extra_cycle() {
         let mut cpu = MOS6502::new_start(0x0000);
-        let mut bus = StubInterface6502::new(|address, read_count| 0x10, |address, data, write_count| panic!("Write function was called"));
+        let mut bus = StubInterface6502::new(
+            |address, read_count| 0x10,
+            |address, data, write_count| panic!("Write function was called"),
+        );
         cpu.x_register = 255;
         let expected_program_counter = cpu.program_counter + 2;
         let address_mode_value = absolute_x(&mut cpu, &mut bus);
@@ -237,7 +244,10 @@ mod test {
     #[test]
     fn test_absolute_y() {
         let mut cpu = MOS6502::new_start(0x0000);
-        let mut bus = StubInterface6502::new(|address, read_count| 0x00, |address, data, write_count| panic!("Write function was called"));
+        let mut bus = StubInterface6502::new(
+            |address, read_count| 0x00,
+            |address, data, write_count| panic!("Write function was called"),
+        );
         cpu.y_register = 2;
         let expected_program_counter = cpu.program_counter + 2;
         let address_mode_value = absolute_y(&mut cpu, &mut bus);
@@ -250,7 +260,10 @@ mod test {
     #[test]
     fn test_absolute_y_extra_cycle() {
         let mut cpu = MOS6502::new_start(0x0000);
-        let mut bus = StubInterface6502::new(|address, read_count| 0x10, |address, data, write_count| panic!("Write function was called"));
+        let mut bus = StubInterface6502::new(
+            |address, read_count| 0x10,
+            |address, data, write_count| panic!("Write function was called"),
+        );
         cpu.y_register = 255;
         let expected_program_counter = cpu.program_counter + 2;
         let address_mode_value = absolute_y(&mut cpu, &mut bus);
@@ -263,7 +276,10 @@ mod test {
     #[test]
     fn test_immediate() {
         let mut cpu = MOS6502::new_start(0x0000);
-        let mut bus = StubInterface6502::new(|address, read_count| panic!("Read function was called"), |address, data, write_count| panic!("Write function was called"));
+        let mut bus = StubInterface6502::new(
+            |address, read_count| panic!("Read function was called"),
+            |address, data, write_count| panic!("Write function was called"),
+        );
 
         let prior_program_counter = cpu.program_counter;
         let address_mode_value = immediate(&mut cpu, &mut bus);
@@ -276,7 +292,10 @@ mod test {
     #[test]
     fn test_implied() {
         let mut cpu = MOS6502::new_start(0x0000);
-        let mut bus = StubInterface6502::new(|address, read_count| panic!("Read function was called"), |address, data, write_count| panic!("Write function was called"));
+        let mut bus = StubInterface6502::new(
+            |address, read_count| panic!("Read function was called"),
+            |address, data, write_count| panic!("Write function was called"),
+        );
 
         let expected_program_counter = cpu.program_counter;
         let address_mode_value = implied(&mut cpu, &mut bus);
@@ -442,7 +461,10 @@ mod test {
     #[test]
     fn test_relative() {
         let mut cpu = MOS6502::new_start(0x0000);
-        let mut bus = StubInterface6502::new(|address, read_count| 0x10, |address, data, write_count| panic!("Write function was called"));
+        let mut bus = StubInterface6502::new(
+            |address, read_count| 0x10,
+            |address, data, write_count| panic!("Write function was called"),
+        );
 
         let expected_program_counter = cpu.program_counter + 1;
         let address_mode_value = relative(&mut cpu, &mut bus);
@@ -455,7 +477,10 @@ mod test {
     #[test]
     fn test_zero_page() {
         let mut cpu = MOS6502::new_start(0x0000);
-        let mut bus = StubInterface6502::new(|address, read_count| 0x10, |address, data, write_count| panic!("Write function was called"));
+        let mut bus = StubInterface6502::new(
+            |address, read_count| 0x10,
+            |address, data, write_count| panic!("Write function was called"),
+        );
 
         let expected_program_counter = cpu.program_counter + 1;
         let address_mode_value = zero_page(&mut cpu, &mut bus);
@@ -468,7 +493,10 @@ mod test {
     #[test]
     fn test_zero_page_x() {
         let mut cpu = MOS6502::new_start(0x0000);
-        let mut bus = StubInterface6502::new(|address, read_count| 0x10, |address, data, write_count| panic!("Write function was called"));
+        let mut bus = StubInterface6502::new(
+            |address, read_count| 0x10,
+            |address, data, write_count| panic!("Write function was called"),
+        );
 
         cpu.x_register = 0x10;
         let expected_program_counter = cpu.program_counter + 1;
@@ -482,7 +510,10 @@ mod test {
     #[test]
     fn test_zero_page_y() {
         let mut cpu = MOS6502::new_start(0x0000);
-        let mut bus = StubInterface6502::new(|address, read_count| 0x10, |address, data, write_count| panic!("Write function was called"));
+        let mut bus = StubInterface6502::new(
+            |address, read_count| 0x10,
+            |address, data, write_count| panic!("Write function was called"),
+        );
 
         cpu.y_register = 0x10;
         let expected_program_counter = cpu.program_counter + 1;

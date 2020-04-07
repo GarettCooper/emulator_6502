@@ -11,7 +11,12 @@ pub(crate) struct StubInterface6502 {
 
 impl StubInterface6502 {
     pub(crate) fn new(read_fn: fn(u16, u8) -> u8, write_fn: fn(u16, u8, u8)) -> Self {
-        StubInterface6502 { read: read_fn, write: write_fn, read_count: 0, write_count: 0 }
+        StubInterface6502 {
+            read: read_fn,
+            write: write_fn,
+            read_count: 0,
+            write_count: 0,
+        }
     }
 }
 
@@ -27,13 +32,11 @@ impl Interface6502 for StubInterface6502 {
     }
 }
 
-impl Default for StubInterface6502{
+impl Default for StubInterface6502 {
     fn default() -> Self {
-        StubInterface6502::new(|_address, _read_count| {
-            panic!("Read Function was not initialized")
-        },
-        |_address, _data, _write_count| {
-            panic!("Write Function was not initialized")
-        })
+        StubInterface6502::new(
+            |_address, _read_count| panic!("Read Function was not initialized"),
+            |_address, _data, _write_count| panic!("Write Function was not initialized"),
+        )
     }
 }

@@ -39,266 +39,1546 @@ impl Instruction<'_> {
     }
 }
 
-//TODO: Replace this with a macro-generated match statement so that it can be better evaluated at compile time
+// TODO: Replace this with a macro-generated match statement so that it can be better evaluated at compile time
 /// The table that is used to map instructions to the appropriate function and addressing mode for
 /// executing them.
-pub (super) static OPCODE_TABLE: [Instruction; 256] = [
-    Instruction { name:"brk", function: brk, address_mode: implied, cycles: 7 },		//0x0
-    Instruction { name:"ora", function: ora, address_mode: indirect_x, cycles: 6 },		//0x1
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x2
-    Instruction { name:"slo", function: slo, address_mode: indirect_x, cycles: 8 },		//0x3
-    Instruction { name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x4
-    Instruction { name:"ora", function: ora, address_mode: zero_page, cycles: 3 },		//0x5
-    Instruction { name:"asl", function: asl, address_mode: zero_page, cycles: 5 },		//0x6
-    Instruction { name:"slo", function: slo, address_mode: zero_page, cycles: 5 },		//0x7
-    Instruction { name:"php", function: php, address_mode: implied, cycles: 3 },		//0x8
-    Instruction { name:"ora", function: ora, address_mode: immediate, cycles: 2 },		//0x9
-    Instruction { name:"asl", function: asl, address_mode: implied, cycles: 2 },		//0xa
-    Instruction { name:"anc", function: anc, address_mode: immediate, cycles: 2 },		//0xb
-    Instruction { name:"nop", function: nop, address_mode: absolute, cycles: 4 },		//0xc
-    Instruction { name:"ora", function: ora, address_mode: absolute, cycles: 4 },		//0xd
-    Instruction { name:"asl", function: asl, address_mode: absolute, cycles: 6 },		//0xe
-    Instruction { name:"slo", function: slo, address_mode: absolute, cycles: 6 },		//0xf
-    Instruction { name:"bpl", function: bpl, address_mode: relative, cycles: 2 },		//0x10
-    Instruction { name:"ora", function: ora, address_mode: indirect_y, cycles: 5 },		//0x11
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x12
-    Instruction { name:"slo", function: slo, address_mode: indirect_y_const, cycles: 8 },		//0x13
-    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x14
-    Instruction { name:"ora", function: ora, address_mode: zero_page_x, cycles: 4 },		//0x15
-    Instruction { name:"asl", function: asl, address_mode: zero_page_x, cycles: 6 },		//0x16
-    Instruction { name:"slo", function: slo, address_mode: zero_page_x, cycles: 6 },		//0x17
-    Instruction { name:"clc", function: clc, address_mode: implied, cycles: 2 },		//0x18
-    Instruction { name:"ora", function: ora, address_mode: absolute_y, cycles: 4 },		//0x19
-    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x1a
-    Instruction { name:"slo", function: slo, address_mode: absolute_y_const, cycles: 7 },		//0x1b
-    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x1c
-    Instruction { name:"ora", function: ora, address_mode: absolute_x, cycles: 4 },		//0x1d
-    Instruction { name:"asl", function: asl, address_mode: absolute_x_const, cycles: 7 },		//0x1e
-    Instruction { name:"slo", function: slo, address_mode: absolute_x_const, cycles: 7 },		//0x1f
-    Instruction { name:"jsr", function: jsr, address_mode: absolute, cycles: 6 },		//0x20
-    Instruction { name:"and", function: and, address_mode: indirect_x, cycles: 6 },		//0x21
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x22
-    Instruction { name:"rla", function: rla, address_mode: indirect_x, cycles: 8 },		//0x23
-    Instruction { name:"bit", function: bit, address_mode: zero_page, cycles: 3 },		//0x24
-    Instruction { name:"and", function: and, address_mode: zero_page, cycles: 3 },		//0x25
-    Instruction { name:"rol", function: rol, address_mode: zero_page, cycles: 5 },		//0x26
-    Instruction { name:"rla", function: rla, address_mode: zero_page, cycles: 5 },		//0x27
-    Instruction { name:"plp", function: plp, address_mode: implied, cycles: 4 },		//0x28
-    Instruction { name:"and", function: and, address_mode: immediate, cycles: 2 },		//0x29
-    Instruction { name:"rol", function: rol, address_mode: implied, cycles: 2 },		//0x2a
-    Instruction { name:"anc", function: anc, address_mode: immediate, cycles: 2 },		//0x2b
-    Instruction { name:"bit", function: bit, address_mode: absolute, cycles: 4 },		//0x2c
-    Instruction { name:"and", function: and, address_mode: absolute, cycles: 4 },		//0x2d
-    Instruction { name:"rol", function: rol, address_mode: absolute, cycles: 6 },		//0x2e
-    Instruction { name:"rla", function: rla, address_mode: absolute, cycles: 6 },		//0x2f
-    Instruction { name:"bmi", function: bmi, address_mode: relative, cycles: 2 },		//0x30
-    Instruction { name:"and", function: and, address_mode: indirect_y, cycles: 5 },		//0x31
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x32
-    Instruction { name:"rla", function: rla, address_mode: indirect_y_const, cycles: 8 },		//0x33
-    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x34
-    Instruction { name:"and", function: and, address_mode: zero_page_x, cycles: 4 },		//0x35
-    Instruction { name:"rol", function: rol, address_mode: zero_page_x, cycles: 6 },		//0x36
-    Instruction { name:"rla", function: rla, address_mode: zero_page_x, cycles: 6 },		//0x37
-    Instruction { name:"sec", function: sec, address_mode: implied, cycles: 2 },		//0x38
-    Instruction { name:"and", function: and, address_mode: absolute_y, cycles: 4 },		//0x39
-    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x3a
-    Instruction { name:"rla", function: rla, address_mode: absolute_y_const, cycles: 7 },		//0x3b
-    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x3c
-    Instruction { name:"and", function: and, address_mode: absolute_x, cycles: 4 },		//0x3d
-    Instruction { name:"rol", function: rol, address_mode: absolute_x_const, cycles: 7 },		//0x3e
-    Instruction { name:"rla", function: rla, address_mode: absolute_x_const, cycles: 7 },		//0x3f
-    Instruction { name:"rti", function: rti, address_mode: implied, cycles: 6 },		//0x40
-    Instruction { name:"eor", function: eor, address_mode: indirect_x, cycles: 6 },		//0x41
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x42
-    Instruction { name:"sre", function: sre, address_mode: indirect_x, cycles: 8 },		//0x43
-    Instruction { name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x44
-    Instruction { name:"eor", function: eor, address_mode: zero_page, cycles: 3 },		//0x45
-    Instruction { name:"lsr", function: lsr, address_mode: zero_page, cycles: 5 },		//0x46
-    Instruction { name:"sre", function: sre, address_mode: zero_page, cycles: 5 },		//0x47
-    Instruction { name:"pha", function: pha, address_mode: implied, cycles: 3 },		//0x48
-    Instruction { name:"eor", function: eor, address_mode: immediate, cycles: 2 },		//0x49
-    Instruction { name:"lsr", function: lsr, address_mode: implied, cycles: 2 },		//0x4a
-    Instruction { name:"alr", function: alr, address_mode: immediate, cycles: 2 },		//0x4b
-    Instruction { name:"jmp", function: jmp, address_mode: absolute, cycles: 3 },		//0x4c
-    Instruction { name:"eor", function: eor, address_mode: absolute, cycles: 4 },		//0x4d
-    Instruction { name:"lsr", function: lsr, address_mode: absolute, cycles: 6 },		//0x4e
-    Instruction { name:"sre", function: sre, address_mode: absolute, cycles: 6 },		//0x4f
-    Instruction { name:"bvc", function: bvc, address_mode: relative, cycles: 2 },		//0x50
-    Instruction { name:"eor", function: eor, address_mode: indirect_y, cycles: 5 },		//0x51
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x52
-    Instruction { name:"sre", function: sre, address_mode: indirect_y_const, cycles: 8 },		//0x53
-    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x54
-    Instruction { name:"eor", function: eor, address_mode: zero_page_x, cycles: 4 },		//0x55
-    Instruction { name:"lsr", function: lsr, address_mode: zero_page_x, cycles: 6 },		//0x56
-    Instruction { name:"sre", function: sre, address_mode: zero_page_x, cycles: 6 },		//0x57
-    Instruction { name:"cli", function: cli, address_mode: implied, cycles: 2 },		//0x58
-    Instruction { name:"eor", function: eor, address_mode: absolute_y, cycles: 4 },		//0x59
-    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x5a
-    Instruction { name:"sre", function: sre, address_mode: absolute_y_const, cycles: 7 },		//0x5b
-    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x5c
-    Instruction { name:"eor", function: eor, address_mode: absolute_x, cycles: 4 },		//0x5d
-    Instruction { name:"lsr", function: lsr, address_mode: absolute_x_const, cycles: 7 },		//0x5e
-    Instruction { name:"sre", function: sre, address_mode: absolute_x_const, cycles: 7 },		//0x5f
-    Instruction { name:"rts", function: rts, address_mode: implied, cycles: 6 },		//0x60
-    Instruction { name:"adc", function: adc, address_mode: indirect_x, cycles: 6 },		//0x61
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x62
-    Instruction { name:"rra", function: rra, address_mode: indirect_x, cycles: 8 },		//0x63
-    Instruction { name:"nop", function: nop, address_mode: zero_page, cycles: 3 },		//0x64
-    Instruction { name:"adc", function: adc, address_mode: zero_page, cycles: 3 },		//0x65
-    Instruction { name:"ror", function: ror, address_mode: zero_page, cycles: 5 },		//0x66
-    Instruction { name:"rra", function: rra, address_mode: zero_page, cycles: 5 },		//0x67
-    Instruction { name:"pla", function: pla, address_mode: implied, cycles: 4 },		//0x68
-    Instruction { name:"adc", function: adc, address_mode: immediate, cycles: 2 },		//0x69
-    Instruction { name:"ror", function: ror, address_mode: implied, cycles: 2 },		//0x6a
-    Instruction { name:"arr", function: arr, address_mode: immediate, cycles: 2 },		//0x6b
-    Instruction { name:"jmp", function: jmp, address_mode: indirect, cycles: 5 },		//0x6c
-    Instruction { name:"adc", function: adc, address_mode: absolute, cycles: 4 },		//0x6d
-    Instruction { name:"ror", function: ror, address_mode: absolute, cycles: 6 },		//0x6e
-    Instruction { name:"rra", function: rra, address_mode: absolute, cycles: 6 },		//0x6f
-    Instruction { name:"bvs", function: bvs, address_mode: relative, cycles: 2 },		//0x70
-    Instruction { name:"adc", function: adc, address_mode: indirect_y, cycles: 5 },		//0x71
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x72
-    Instruction { name:"rra", function: rra, address_mode: indirect_y_const, cycles: 8 },		//0x73
-    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0x74
-    Instruction { name:"adc", function: adc, address_mode: zero_page_x, cycles: 4 },		//0x75
-    Instruction { name:"ror", function: ror, address_mode: zero_page_x, cycles: 6 },		//0x76
-    Instruction { name:"rra", function: rra, address_mode: zero_page_x, cycles: 6 },		//0x77
-    Instruction { name:"sei", function: sei, address_mode: implied, cycles: 2 },		//0x78
-    Instruction { name:"adc", function: adc, address_mode: absolute_y, cycles: 4 },		//0x79
-    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0x7a
-    Instruction { name:"rra", function: rra, address_mode: absolute_y_const, cycles: 7 },		//0x7b
-    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0x7c
-    Instruction { name:"adc", function: adc, address_mode: absolute_x, cycles: 4 },		//0x7d
-    Instruction { name:"ror", function: ror, address_mode: absolute_x_const, cycles: 7 },		//0x7e
-    Instruction { name:"rra", function: rra, address_mode: absolute_x_const, cycles: 7 },		//0x7f
-    Instruction { name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x80
-    Instruction { name:"sta", function: sta, address_mode: indirect_x, cycles: 6 },		//0x81
-    Instruction { name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x82
-    Instruction { name:"sax", function: sax, address_mode: indirect_x, cycles: 6 },		//0x83
-    Instruction { name:"sty", function: sty, address_mode: zero_page, cycles: 3 },		//0x84
-    Instruction { name:"sta", function: sta, address_mode: zero_page, cycles: 3 },		//0x85
-    Instruction { name:"stx", function: stx, address_mode: zero_page, cycles: 3 },		//0x86
-    Instruction { name:"sax", function: sax, address_mode: zero_page, cycles: 3 },		//0x87
-    Instruction { name:"dey", function: dey, address_mode: implied, cycles: 2 },		//0x88
-    Instruction { name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0x89
-    Instruction { name:"txa", function: txa, address_mode: implied, cycles: 2 },		//0x8a
-    Instruction { name:"xaa", function: xaa, address_mode: immediate, cycles: 2 },		//0x8b
-    Instruction { name:"sty", function: sty, address_mode: absolute, cycles: 4 },		//0x8c
-    Instruction { name:"sta", function: sta, address_mode: absolute, cycles: 4 },		//0x8d
-    Instruction { name:"stx", function: stx, address_mode: absolute, cycles: 4 },		//0x8e
-    Instruction { name:"sax", function: sax, address_mode: absolute, cycles: 4 },		//0x8f
-    Instruction { name:"bcc", function: bcc, address_mode: relative, cycles: 2 },		//0x90
-    Instruction { name:"sta", function: sta, address_mode: indirect_y, cycles: 6 },		//0x91
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0x92
-    Instruction { name:"ahx", function: ahx, address_mode: indirect_y, cycles: 6 },		//0x93
-    Instruction { name:"sty", function: sty, address_mode: zero_page_x, cycles: 4 },		//0x94
-    Instruction { name:"sta", function: sta, address_mode: zero_page_x, cycles: 4 },		//0x95
-    Instruction { name:"stx", function: stx, address_mode: zero_page_y, cycles: 4 },		//0x96
-    Instruction { name:"sax", function: sax, address_mode: zero_page_y, cycles: 4 },		//0x97
-    Instruction { name:"tya", function: tya, address_mode: implied, cycles: 2 },		//0x98
-    Instruction { name:"sta", function: sta, address_mode: absolute_y_const, cycles: 5 },		//0x99
-    Instruction { name:"txs", function: txs, address_mode: implied, cycles: 2 },		//0x9a
-    Instruction { name:"tas", function: tas, address_mode: absolute_y, cycles: 5 },		//0x9b
-    Instruction { name:"shy", function: shy, address_mode: absolute_x, cycles: 5 },		//0x9c
-    Instruction { name:"sta", function: sta, address_mode: absolute_x_const, cycles: 5 },		//0x9d
-    Instruction { name:"shx", function: shx, address_mode: absolute_y, cycles: 5 },		//0x9e
-    Instruction { name:"ahx", function: ahx, address_mode: absolute_y, cycles: 5 },		//0x9f
-    Instruction { name:"ldy", function: ldy, address_mode: immediate, cycles: 2 },		//0xa0
-    Instruction { name:"lda", function: lda, address_mode: indirect_x, cycles: 6 },		//0xa1
-    Instruction { name:"ldx", function: ldx, address_mode: immediate, cycles: 2 },		//0xa2
-    Instruction { name:"lax", function: lax, address_mode: indirect_x, cycles: 6 },		//0xa3
-    Instruction { name:"ldy", function: ldy, address_mode: zero_page, cycles: 3 },		//0xa4
-    Instruction { name:"lda", function: lda, address_mode: zero_page, cycles: 3 },		//0xa5
-    Instruction { name:"ldx", function: ldx, address_mode: zero_page, cycles: 3 },		//0xa6
-    Instruction { name:"lax", function: lax, address_mode: zero_page, cycles: 3 },		//0xa7
-    Instruction { name:"tay", function: tay, address_mode: implied, cycles: 2 },		//0xa8
-    Instruction { name:"lda", function: lda, address_mode: immediate, cycles: 2 },		//0xa9
-    Instruction { name:"tax", function: tax, address_mode: implied, cycles: 2 },		//0xaa
-    Instruction { name:"lax", function: lax, address_mode: immediate, cycles: 2 },		//0xab
-    Instruction { name:"ldy", function: ldy, address_mode: absolute, cycles: 4 },		//0xac
-    Instruction { name:"lda", function: lda, address_mode: absolute, cycles: 4 },		//0xad
-    Instruction { name:"ldx", function: ldx, address_mode: absolute, cycles: 4 },		//0xae
-    Instruction { name:"lax", function: lax, address_mode: absolute, cycles: 4 },		//0xaf
-    Instruction { name:"bcs", function: bcs, address_mode: relative, cycles: 2 },		//0xb0
-    Instruction { name:"lda", function: lda, address_mode: indirect_y, cycles: 5 },		//0xb1
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xb2
-    Instruction { name:"lax", function: lax, address_mode: indirect_y, cycles: 5 },		//0xb3
-    Instruction { name:"ldy", function: ldy, address_mode: zero_page_x, cycles: 4 },		//0xb4
-    Instruction { name:"lda", function: lda, address_mode: zero_page_x, cycles: 4 },		//0xb5
-    Instruction { name:"ldx", function: ldx, address_mode: zero_page_y, cycles: 4 },		//0xb6
-    Instruction { name:"lax", function: lax, address_mode: zero_page_y, cycles: 4 },		//0xb7
-    Instruction { name:"clv", function: clv, address_mode: implied, cycles: 2 },		//0xb8
-    Instruction { name:"lda", function: lda, address_mode: absolute_y, cycles: 4 },		//0xb9
-    Instruction { name:"tsx", function: tsx, address_mode: implied, cycles: 2 },		//0xba
-    Instruction { name:"las", function: las, address_mode: absolute_y, cycles: 4 },		//0xbb
-    Instruction { name:"ldy", function: ldy, address_mode: absolute_x, cycles: 4 },		//0xbc
-    Instruction { name:"lda", function: lda, address_mode: absolute_x, cycles: 4 },		//0xbd
-    Instruction { name:"ldx", function: ldx, address_mode: absolute_y, cycles: 4 },		//0xbe
-    Instruction { name:"lax", function: lax, address_mode: absolute_y, cycles: 4 },		//0xbf
-    Instruction { name:"cpy", function: cpy, address_mode: immediate, cycles: 2 },		//0xc0
-    Instruction { name:"cmp", function: cmp, address_mode: indirect_x, cycles: 6 },		//0xc1
-    Instruction { name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0xc2
-    Instruction { name:"dcp", function: dcp, address_mode: indirect_x, cycles: 8 },		//0xc3
-    Instruction { name:"cpy", function: cpy, address_mode: zero_page, cycles: 3 },		//0xc4
-    Instruction { name:"cmp", function: cmp, address_mode: zero_page, cycles: 3 },		//0xc5
-    Instruction { name:"dec", function: dec, address_mode: zero_page, cycles: 5 },		//0xc6
-    Instruction { name:"dcp", function: dcp, address_mode: zero_page, cycles: 5 },		//0xc7
-    Instruction { name:"iny", function: iny, address_mode: implied, cycles: 2 },		//0xc8
-    Instruction { name:"cmp", function: cmp, address_mode: immediate, cycles: 2 },		//0xc9
-    Instruction { name:"dex", function: dex, address_mode: implied, cycles: 2 },		//0xca
-    Instruction { name:"axs", function: axs, address_mode: immediate, cycles: 2 },		//0xcb
-    Instruction { name:"cpy", function: cpy, address_mode: absolute, cycles: 4 },		//0xcc
-    Instruction { name:"cmp", function: cmp, address_mode: absolute, cycles: 4 },		//0xcd
-    Instruction { name:"dec", function: dec, address_mode: absolute, cycles: 6 },		//0xce
-    Instruction { name:"dcp", function: dcp, address_mode: absolute, cycles: 6 },		//0xcf
-    Instruction { name:"bne", function: bne, address_mode: relative, cycles: 2 },		//0xd0
-    Instruction { name:"cmp", function: cmp, address_mode: indirect_y, cycles: 5 },		//0xd1
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xd2
-    Instruction { name:"dcp", function: dcp, address_mode: indirect_y_const, cycles: 8 },		//0xd3
-    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0xd4
-    Instruction { name:"cmp", function: cmp, address_mode: zero_page_x, cycles: 4 },		//0xd5
-    Instruction { name:"dec", function: dec, address_mode: zero_page_x, cycles: 6 },		//0xd6
-    Instruction { name:"dcp", function: dcp, address_mode: zero_page_x, cycles: 6 },		//0xd7
-    Instruction { name:"cld", function: cld, address_mode: implied, cycles: 2 },		//0xd8
-    Instruction { name:"cmp", function: cmp, address_mode: absolute_y, cycles: 4 },		//0xd9
-    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xda
-    Instruction { name:"dcp", function: dcp, address_mode: absolute_y_const, cycles: 7 },		//0xdb
-    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0xdc
-    Instruction { name:"cmp", function: cmp, address_mode: absolute_x, cycles: 4 },		//0xdd
-    Instruction { name:"dec", function: dec, address_mode: absolute_x_const, cycles: 7 },		//0xde
-    Instruction { name:"dcp", function: dcp, address_mode: absolute_x_const, cycles: 7 },		//0xdf
-    Instruction { name:"cpx", function: cpx, address_mode: immediate, cycles: 2 },		//0xe0
-    Instruction { name:"sbc", function: sbc, address_mode: indirect_x, cycles: 6 },		//0xe1
-    Instruction { name:"nop", function: nop, address_mode: immediate, cycles: 2 },		//0xe2
-    Instruction { name:"isc", function: isc, address_mode: indirect_x, cycles: 8 },		//0xe3
-    Instruction { name:"cpx", function: cpx, address_mode: zero_page, cycles: 3 },		//0xe4
-    Instruction { name:"sbc", function: sbc, address_mode: zero_page, cycles: 3 },		//0xe5
-    Instruction { name:"inc", function: inc, address_mode: zero_page, cycles: 5 },		//0xe6
-    Instruction { name:"isc", function: isc, address_mode: zero_page, cycles: 5 },		//0xe7
-    Instruction { name:"inx", function: inx, address_mode: implied, cycles: 2 },		//0xe8
-    Instruction { name:"sbc", function: sbc, address_mode: immediate, cycles: 2 },		//0xe9
-    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xea
-    Instruction { name:"sbc", function: sbc, address_mode: immediate, cycles: 2 },		//0xeb
-    Instruction { name:"cpx", function: cpx, address_mode: absolute, cycles: 4 },		//0xec
-    Instruction { name:"sbc", function: sbc, address_mode: absolute, cycles: 4 },		//0xed
-    Instruction { name:"inc", function: inc, address_mode: absolute, cycles: 6 },		//0xee
-    Instruction { name:"isc", function: isc, address_mode: absolute, cycles: 6 },		//0xef
-    Instruction { name:"beq", function: beq, address_mode: relative, cycles: 2 },		//0xf0
-    Instruction { name:"sbc", function: sbc, address_mode: indirect_y, cycles: 5 },		//0xf1
-    Instruction { name:"kil", function: kil, address_mode: implied, cycles: 0 },		//0xf2
-    Instruction { name:"isc", function: isc, address_mode: indirect_y_const, cycles: 8 },		//0xf3
-    Instruction { name:"nop", function: nop, address_mode: zero_page_x, cycles: 4 },		//0xf4
-    Instruction { name:"sbc", function: sbc, address_mode: zero_page_x, cycles: 4 },		//0xf5
-    Instruction { name:"inc", function: inc, address_mode: zero_page_x, cycles: 6 },		//0xf6
-    Instruction { name:"isc", function: isc, address_mode: zero_page_x, cycles: 6 },		//0xf7
-    Instruction { name:"sed", function: sed, address_mode: implied, cycles: 2 },		//0xf8
-    Instruction { name:"sbc", function: sbc, address_mode: absolute_y, cycles: 4 },		//0xf9
-    Instruction { name:"nop", function: nop, address_mode: implied, cycles: 2 },		//0xfa
-    Instruction { name:"isc", function: isc, address_mode: absolute_y_const, cycles: 7 },		//0xfb
-    Instruction { name:"nop", function: nop, address_mode: absolute_x, cycles: 4 },		//0xfc
-    Instruction { name:"sbc", function: sbc, address_mode: absolute_x, cycles: 4 },		//0xfd
-    Instruction { name:"inc", function: inc, address_mode: absolute_x_const, cycles: 7 },		//0xfe
-    Instruction { name:"isc", function: isc, address_mode: absolute_x_const, cycles: 7 },		//0xff
+pub(super) static OPCODE_TABLE: [Instruction; 256] = [
+    Instruction {
+        name: "brk",
+        function: brk,
+        address_mode: implied,
+        cycles: 7,
+    }, //0x0
+    Instruction {
+        name: "ora",
+        function: ora,
+        address_mode: indirect_x,
+        cycles: 6,
+    }, //0x1
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0x2
+    Instruction {
+        name: "slo",
+        function: slo,
+        address_mode: indirect_x,
+        cycles: 8,
+    }, //0x3
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x4
+    Instruction {
+        name: "ora",
+        function: ora,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x5
+    Instruction {
+        name: "asl",
+        function: asl,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0x6
+    Instruction {
+        name: "slo",
+        function: slo,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0x7
+    Instruction {
+        name: "php",
+        function: php,
+        address_mode: implied,
+        cycles: 3,
+    }, //0x8
+    Instruction {
+        name: "ora",
+        function: ora,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0x9
+    Instruction {
+        name: "asl",
+        function: asl,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xa
+    Instruction {
+        name: "anc",
+        function: anc,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xb
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0xc
+    Instruction {
+        name: "ora",
+        function: ora,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0xd
+    Instruction {
+        name: "asl",
+        function: asl,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0xe
+    Instruction {
+        name: "slo",
+        function: slo,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0xf
+    Instruction {
+        name: "bpl",
+        function: bpl,
+        address_mode: relative,
+        cycles: 2,
+    }, //0x10
+    Instruction {
+        name: "ora",
+        function: ora,
+        address_mode: indirect_y,
+        cycles: 5,
+    }, //0x11
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0x12
+    Instruction {
+        name: "slo",
+        function: slo,
+        address_mode: indirect_y_const,
+        cycles: 8,
+    }, //0x13
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0x14
+    Instruction {
+        name: "ora",
+        function: ora,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0x15
+    Instruction {
+        name: "asl",
+        function: asl,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0x16
+    Instruction {
+        name: "slo",
+        function: slo,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0x17
+    Instruction {
+        name: "clc",
+        function: clc,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x18
+    Instruction {
+        name: "ora",
+        function: ora,
+        address_mode: absolute_y,
+        cycles: 4,
+    }, //0x19
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x1a
+    Instruction {
+        name: "slo",
+        function: slo,
+        address_mode: absolute_y_const,
+        cycles: 7,
+    }, //0x1b
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0x1c
+    Instruction {
+        name: "ora",
+        function: ora,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0x1d
+    Instruction {
+        name: "asl",
+        function: asl,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0x1e
+    Instruction {
+        name: "slo",
+        function: slo,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0x1f
+    Instruction {
+        name: "jsr",
+        function: jsr,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0x20
+    Instruction {
+        name: "and",
+        function: and,
+        address_mode: indirect_x,
+        cycles: 6,
+    }, //0x21
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0x22
+    Instruction {
+        name: "rla",
+        function: rla,
+        address_mode: indirect_x,
+        cycles: 8,
+    }, //0x23
+    Instruction {
+        name: "bit",
+        function: bit,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x24
+    Instruction {
+        name: "and",
+        function: and,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x25
+    Instruction {
+        name: "rol",
+        function: rol,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0x26
+    Instruction {
+        name: "rla",
+        function: rla,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0x27
+    Instruction {
+        name: "plp",
+        function: plp,
+        address_mode: implied,
+        cycles: 4,
+    }, //0x28
+    Instruction {
+        name: "and",
+        function: and,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0x29
+    Instruction {
+        name: "rol",
+        function: rol,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x2a
+    Instruction {
+        name: "anc",
+        function: anc,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0x2b
+    Instruction {
+        name: "bit",
+        function: bit,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0x2c
+    Instruction {
+        name: "and",
+        function: and,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0x2d
+    Instruction {
+        name: "rol",
+        function: rol,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0x2e
+    Instruction {
+        name: "rla",
+        function: rla,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0x2f
+    Instruction {
+        name: "bmi",
+        function: bmi,
+        address_mode: relative,
+        cycles: 2,
+    }, //0x30
+    Instruction {
+        name: "and",
+        function: and,
+        address_mode: indirect_y,
+        cycles: 5,
+    }, //0x31
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0x32
+    Instruction {
+        name: "rla",
+        function: rla,
+        address_mode: indirect_y_const,
+        cycles: 8,
+    }, //0x33
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0x34
+    Instruction {
+        name: "and",
+        function: and,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0x35
+    Instruction {
+        name: "rol",
+        function: rol,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0x36
+    Instruction {
+        name: "rla",
+        function: rla,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0x37
+    Instruction {
+        name: "sec",
+        function: sec,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x38
+    Instruction {
+        name: "and",
+        function: and,
+        address_mode: absolute_y,
+        cycles: 4,
+    }, //0x39
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x3a
+    Instruction {
+        name: "rla",
+        function: rla,
+        address_mode: absolute_y_const,
+        cycles: 7,
+    }, //0x3b
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0x3c
+    Instruction {
+        name: "and",
+        function: and,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0x3d
+    Instruction {
+        name: "rol",
+        function: rol,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0x3e
+    Instruction {
+        name: "rla",
+        function: rla,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0x3f
+    Instruction {
+        name: "rti",
+        function: rti,
+        address_mode: implied,
+        cycles: 6,
+    }, //0x40
+    Instruction {
+        name: "eor",
+        function: eor,
+        address_mode: indirect_x,
+        cycles: 6,
+    }, //0x41
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0x42
+    Instruction {
+        name: "sre",
+        function: sre,
+        address_mode: indirect_x,
+        cycles: 8,
+    }, //0x43
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x44
+    Instruction {
+        name: "eor",
+        function: eor,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x45
+    Instruction {
+        name: "lsr",
+        function: lsr,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0x46
+    Instruction {
+        name: "sre",
+        function: sre,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0x47
+    Instruction {
+        name: "pha",
+        function: pha,
+        address_mode: implied,
+        cycles: 3,
+    }, //0x48
+    Instruction {
+        name: "eor",
+        function: eor,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0x49
+    Instruction {
+        name: "lsr",
+        function: lsr,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x4a
+    Instruction {
+        name: "alr",
+        function: alr,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0x4b
+    Instruction {
+        name: "jmp",
+        function: jmp,
+        address_mode: absolute,
+        cycles: 3,
+    }, //0x4c
+    Instruction {
+        name: "eor",
+        function: eor,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0x4d
+    Instruction {
+        name: "lsr",
+        function: lsr,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0x4e
+    Instruction {
+        name: "sre",
+        function: sre,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0x4f
+    Instruction {
+        name: "bvc",
+        function: bvc,
+        address_mode: relative,
+        cycles: 2,
+    }, //0x50
+    Instruction {
+        name: "eor",
+        function: eor,
+        address_mode: indirect_y,
+        cycles: 5,
+    }, //0x51
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0x52
+    Instruction {
+        name: "sre",
+        function: sre,
+        address_mode: indirect_y_const,
+        cycles: 8,
+    }, //0x53
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0x54
+    Instruction {
+        name: "eor",
+        function: eor,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0x55
+    Instruction {
+        name: "lsr",
+        function: lsr,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0x56
+    Instruction {
+        name: "sre",
+        function: sre,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0x57
+    Instruction {
+        name: "cli",
+        function: cli,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x58
+    Instruction {
+        name: "eor",
+        function: eor,
+        address_mode: absolute_y,
+        cycles: 4,
+    }, //0x59
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x5a
+    Instruction {
+        name: "sre",
+        function: sre,
+        address_mode: absolute_y_const,
+        cycles: 7,
+    }, //0x5b
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0x5c
+    Instruction {
+        name: "eor",
+        function: eor,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0x5d
+    Instruction {
+        name: "lsr",
+        function: lsr,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0x5e
+    Instruction {
+        name: "sre",
+        function: sre,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0x5f
+    Instruction {
+        name: "rts",
+        function: rts,
+        address_mode: implied,
+        cycles: 6,
+    }, //0x60
+    Instruction {
+        name: "adc",
+        function: adc,
+        address_mode: indirect_x,
+        cycles: 6,
+    }, //0x61
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0x62
+    Instruction {
+        name: "rra",
+        function: rra,
+        address_mode: indirect_x,
+        cycles: 8,
+    }, //0x63
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x64
+    Instruction {
+        name: "adc",
+        function: adc,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x65
+    Instruction {
+        name: "ror",
+        function: ror,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0x66
+    Instruction {
+        name: "rra",
+        function: rra,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0x67
+    Instruction {
+        name: "pla",
+        function: pla,
+        address_mode: implied,
+        cycles: 4,
+    }, //0x68
+    Instruction {
+        name: "adc",
+        function: adc,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0x69
+    Instruction {
+        name: "ror",
+        function: ror,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x6a
+    Instruction {
+        name: "arr",
+        function: arr,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0x6b
+    Instruction {
+        name: "jmp",
+        function: jmp,
+        address_mode: indirect,
+        cycles: 5,
+    }, //0x6c
+    Instruction {
+        name: "adc",
+        function: adc,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0x6d
+    Instruction {
+        name: "ror",
+        function: ror,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0x6e
+    Instruction {
+        name: "rra",
+        function: rra,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0x6f
+    Instruction {
+        name: "bvs",
+        function: bvs,
+        address_mode: relative,
+        cycles: 2,
+    }, //0x70
+    Instruction {
+        name: "adc",
+        function: adc,
+        address_mode: indirect_y,
+        cycles: 5,
+    }, //0x71
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0x72
+    Instruction {
+        name: "rra",
+        function: rra,
+        address_mode: indirect_y_const,
+        cycles: 8,
+    }, //0x73
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0x74
+    Instruction {
+        name: "adc",
+        function: adc,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0x75
+    Instruction {
+        name: "ror",
+        function: ror,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0x76
+    Instruction {
+        name: "rra",
+        function: rra,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0x77
+    Instruction {
+        name: "sei",
+        function: sei,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x78
+    Instruction {
+        name: "adc",
+        function: adc,
+        address_mode: absolute_y,
+        cycles: 4,
+    }, //0x79
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x7a
+    Instruction {
+        name: "rra",
+        function: rra,
+        address_mode: absolute_y_const,
+        cycles: 7,
+    }, //0x7b
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0x7c
+    Instruction {
+        name: "adc",
+        function: adc,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0x7d
+    Instruction {
+        name: "ror",
+        function: ror,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0x7e
+    Instruction {
+        name: "rra",
+        function: rra,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0x7f
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0x80
+    Instruction {
+        name: "sta",
+        function: sta,
+        address_mode: indirect_x,
+        cycles: 6,
+    }, //0x81
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0x82
+    Instruction {
+        name: "sax",
+        function: sax,
+        address_mode: indirect_x,
+        cycles: 6,
+    }, //0x83
+    Instruction {
+        name: "sty",
+        function: sty,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x84
+    Instruction {
+        name: "sta",
+        function: sta,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x85
+    Instruction {
+        name: "stx",
+        function: stx,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x86
+    Instruction {
+        name: "sax",
+        function: sax,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0x87
+    Instruction {
+        name: "dey",
+        function: dey,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x88
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0x89
+    Instruction {
+        name: "txa",
+        function: txa,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x8a
+    Instruction {
+        name: "xaa",
+        function: xaa,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0x8b
+    Instruction {
+        name: "sty",
+        function: sty,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0x8c
+    Instruction {
+        name: "sta",
+        function: sta,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0x8d
+    Instruction {
+        name: "stx",
+        function: stx,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0x8e
+    Instruction {
+        name: "sax",
+        function: sax,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0x8f
+    Instruction {
+        name: "bcc",
+        function: bcc,
+        address_mode: relative,
+        cycles: 2,
+    }, //0x90
+    Instruction {
+        name: "sta",
+        function: sta,
+        address_mode: indirect_y,
+        cycles: 6,
+    }, //0x91
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0x92
+    Instruction {
+        name: "ahx",
+        function: ahx,
+        address_mode: indirect_y,
+        cycles: 6,
+    }, //0x93
+    Instruction {
+        name: "sty",
+        function: sty,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0x94
+    Instruction {
+        name: "sta",
+        function: sta,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0x95
+    Instruction {
+        name: "stx",
+        function: stx,
+        address_mode: zero_page_y,
+        cycles: 4,
+    }, //0x96
+    Instruction {
+        name: "sax",
+        function: sax,
+        address_mode: zero_page_y,
+        cycles: 4,
+    }, //0x97
+    Instruction {
+        name: "tya",
+        function: tya,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x98
+    Instruction {
+        name: "sta",
+        function: sta,
+        address_mode: absolute_y_const,
+        cycles: 5,
+    }, //0x99
+    Instruction {
+        name: "txs",
+        function: txs,
+        address_mode: implied,
+        cycles: 2,
+    }, //0x9a
+    Instruction {
+        name: "tas",
+        function: tas,
+        address_mode: absolute_y,
+        cycles: 5,
+    }, //0x9b
+    Instruction {
+        name: "shy",
+        function: shy,
+        address_mode: absolute_x,
+        cycles: 5,
+    }, //0x9c
+    Instruction {
+        name: "sta",
+        function: sta,
+        address_mode: absolute_x_const,
+        cycles: 5,
+    }, //0x9d
+    Instruction {
+        name: "shx",
+        function: shx,
+        address_mode: absolute_y,
+        cycles: 5,
+    }, //0x9e
+    Instruction {
+        name: "ahx",
+        function: ahx,
+        address_mode: absolute_y,
+        cycles: 5,
+    }, //0x9f
+    Instruction {
+        name: "ldy",
+        function: ldy,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xa0
+    Instruction {
+        name: "lda",
+        function: lda,
+        address_mode: indirect_x,
+        cycles: 6,
+    }, //0xa1
+    Instruction {
+        name: "ldx",
+        function: ldx,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xa2
+    Instruction {
+        name: "lax",
+        function: lax,
+        address_mode: indirect_x,
+        cycles: 6,
+    }, //0xa3
+    Instruction {
+        name: "ldy",
+        function: ldy,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0xa4
+    Instruction {
+        name: "lda",
+        function: lda,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0xa5
+    Instruction {
+        name: "ldx",
+        function: ldx,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0xa6
+    Instruction {
+        name: "lax",
+        function: lax,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0xa7
+    Instruction {
+        name: "tay",
+        function: tay,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xa8
+    Instruction {
+        name: "lda",
+        function: lda,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xa9
+    Instruction {
+        name: "tax",
+        function: tax,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xaa
+    Instruction {
+        name: "lax",
+        function: lax,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xab
+    Instruction {
+        name: "ldy",
+        function: ldy,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0xac
+    Instruction {
+        name: "lda",
+        function: lda,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0xad
+    Instruction {
+        name: "ldx",
+        function: ldx,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0xae
+    Instruction {
+        name: "lax",
+        function: lax,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0xaf
+    Instruction {
+        name: "bcs",
+        function: bcs,
+        address_mode: relative,
+        cycles: 2,
+    }, //0xb0
+    Instruction {
+        name: "lda",
+        function: lda,
+        address_mode: indirect_y,
+        cycles: 5,
+    }, //0xb1
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0xb2
+    Instruction {
+        name: "lax",
+        function: lax,
+        address_mode: indirect_y,
+        cycles: 5,
+    }, //0xb3
+    Instruction {
+        name: "ldy",
+        function: ldy,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0xb4
+    Instruction {
+        name: "lda",
+        function: lda,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0xb5
+    Instruction {
+        name: "ldx",
+        function: ldx,
+        address_mode: zero_page_y,
+        cycles: 4,
+    }, //0xb6
+    Instruction {
+        name: "lax",
+        function: lax,
+        address_mode: zero_page_y,
+        cycles: 4,
+    }, //0xb7
+    Instruction {
+        name: "clv",
+        function: clv,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xb8
+    Instruction {
+        name: "lda",
+        function: lda,
+        address_mode: absolute_y,
+        cycles: 4,
+    }, //0xb9
+    Instruction {
+        name: "tsx",
+        function: tsx,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xba
+    Instruction {
+        name: "las",
+        function: las,
+        address_mode: absolute_y,
+        cycles: 4,
+    }, //0xbb
+    Instruction {
+        name: "ldy",
+        function: ldy,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0xbc
+    Instruction {
+        name: "lda",
+        function: lda,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0xbd
+    Instruction {
+        name: "ldx",
+        function: ldx,
+        address_mode: absolute_y,
+        cycles: 4,
+    }, //0xbe
+    Instruction {
+        name: "lax",
+        function: lax,
+        address_mode: absolute_y,
+        cycles: 4,
+    }, //0xbf
+    Instruction {
+        name: "cpy",
+        function: cpy,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xc0
+    Instruction {
+        name: "cmp",
+        function: cmp,
+        address_mode: indirect_x,
+        cycles: 6,
+    }, //0xc1
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xc2
+    Instruction {
+        name: "dcp",
+        function: dcp,
+        address_mode: indirect_x,
+        cycles: 8,
+    }, //0xc3
+    Instruction {
+        name: "cpy",
+        function: cpy,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0xc4
+    Instruction {
+        name: "cmp",
+        function: cmp,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0xc5
+    Instruction {
+        name: "dec",
+        function: dec,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0xc6
+    Instruction {
+        name: "dcp",
+        function: dcp,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0xc7
+    Instruction {
+        name: "iny",
+        function: iny,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xc8
+    Instruction {
+        name: "cmp",
+        function: cmp,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xc9
+    Instruction {
+        name: "dex",
+        function: dex,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xca
+    Instruction {
+        name: "axs",
+        function: axs,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xcb
+    Instruction {
+        name: "cpy",
+        function: cpy,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0xcc
+    Instruction {
+        name: "cmp",
+        function: cmp,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0xcd
+    Instruction {
+        name: "dec",
+        function: dec,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0xce
+    Instruction {
+        name: "dcp",
+        function: dcp,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0xcf
+    Instruction {
+        name: "bne",
+        function: bne,
+        address_mode: relative,
+        cycles: 2,
+    }, //0xd0
+    Instruction {
+        name: "cmp",
+        function: cmp,
+        address_mode: indirect_y,
+        cycles: 5,
+    }, //0xd1
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0xd2
+    Instruction {
+        name: "dcp",
+        function: dcp,
+        address_mode: indirect_y_const,
+        cycles: 8,
+    }, //0xd3
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0xd4
+    Instruction {
+        name: "cmp",
+        function: cmp,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0xd5
+    Instruction {
+        name: "dec",
+        function: dec,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0xd6
+    Instruction {
+        name: "dcp",
+        function: dcp,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0xd7
+    Instruction {
+        name: "cld",
+        function: cld,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xd8
+    Instruction {
+        name: "cmp",
+        function: cmp,
+        address_mode: absolute_y,
+        cycles: 4,
+    }, //0xd9
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xda
+    Instruction {
+        name: "dcp",
+        function: dcp,
+        address_mode: absolute_y_const,
+        cycles: 7,
+    }, //0xdb
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0xdc
+    Instruction {
+        name: "cmp",
+        function: cmp,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0xdd
+    Instruction {
+        name: "dec",
+        function: dec,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0xde
+    Instruction {
+        name: "dcp",
+        function: dcp,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0xdf
+    Instruction {
+        name: "cpx",
+        function: cpx,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xe0
+    Instruction {
+        name: "sbc",
+        function: sbc,
+        address_mode: indirect_x,
+        cycles: 6,
+    }, //0xe1
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xe2
+    Instruction {
+        name: "isc",
+        function: isc,
+        address_mode: indirect_x,
+        cycles: 8,
+    }, //0xe3
+    Instruction {
+        name: "cpx",
+        function: cpx,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0xe4
+    Instruction {
+        name: "sbc",
+        function: sbc,
+        address_mode: zero_page,
+        cycles: 3,
+    }, //0xe5
+    Instruction {
+        name: "inc",
+        function: inc,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0xe6
+    Instruction {
+        name: "isc",
+        function: isc,
+        address_mode: zero_page,
+        cycles: 5,
+    }, //0xe7
+    Instruction {
+        name: "inx",
+        function: inx,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xe8
+    Instruction {
+        name: "sbc",
+        function: sbc,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xe9
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xea
+    Instruction {
+        name: "sbc",
+        function: sbc,
+        address_mode: immediate,
+        cycles: 2,
+    }, //0xeb
+    Instruction {
+        name: "cpx",
+        function: cpx,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0xec
+    Instruction {
+        name: "sbc",
+        function: sbc,
+        address_mode: absolute,
+        cycles: 4,
+    }, //0xed
+    Instruction {
+        name: "inc",
+        function: inc,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0xee
+    Instruction {
+        name: "isc",
+        function: isc,
+        address_mode: absolute,
+        cycles: 6,
+    }, //0xef
+    Instruction {
+        name: "beq",
+        function: beq,
+        address_mode: relative,
+        cycles: 2,
+    }, //0xf0
+    Instruction {
+        name: "sbc",
+        function: sbc,
+        address_mode: indirect_y,
+        cycles: 5,
+    }, //0xf1
+    Instruction {
+        name: "kil",
+        function: kil,
+        address_mode: implied,
+        cycles: 0,
+    }, //0xf2
+    Instruction {
+        name: "isc",
+        function: isc,
+        address_mode: indirect_y_const,
+        cycles: 8,
+    }, //0xf3
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0xf4
+    Instruction {
+        name: "sbc",
+        function: sbc,
+        address_mode: zero_page_x,
+        cycles: 4,
+    }, //0xf5
+    Instruction {
+        name: "inc",
+        function: inc,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0xf6
+    Instruction {
+        name: "isc",
+        function: isc,
+        address_mode: zero_page_x,
+        cycles: 6,
+    }, //0xf7
+    Instruction {
+        name: "sed",
+        function: sed,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xf8
+    Instruction {
+        name: "sbc",
+        function: sbc,
+        address_mode: absolute_y,
+        cycles: 4,
+    }, //0xf9
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: implied,
+        cycles: 2,
+    }, //0xfa
+    Instruction {
+        name: "isc",
+        function: isc,
+        address_mode: absolute_y_const,
+        cycles: 7,
+    }, //0xfb
+    Instruction {
+        name: "nop",
+        function: nop,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0xfc
+    Instruction {
+        name: "sbc",
+        function: sbc,
+        address_mode: absolute_x,
+        cycles: 4,
+    }, //0xfd
+    Instruction {
+        name: "inc",
+        function: inc,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0xfe
+    Instruction {
+        name: "isc",
+        function: isc,
+        address_mode: absolute_x_const,
+        cycles: 7,
+    }, //0xff
 ];
 
 /// ADC: Adds a value and the carry bit to the accumulator
@@ -328,7 +1608,10 @@ fn adc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
         }
         cpu.set_flag(StatusFlag::Zero, result as u8 == 0);
         //Set the Overflow flag if a signed overflow has occurred
-        cpu.set_flag(StatusFlag::Overflow, (!(cpu.accumulator ^ value) & (cpu.accumulator ^ result as u8) & StatusFlag::Negative as u8) > 0);
+        cpu.set_flag(
+            StatusFlag::Overflow,
+            (!(cpu.accumulator ^ value) & (cpu.accumulator ^ result as u8) & StatusFlag::Negative as u8) > 0,
+        );
         //Negative flag is in bit 7, so it can be used to test if the result is negative, because a negative value will also have a 1 in bit 7
         cpu.set_flag(StatusFlag::Negative, result as u8 & StatusFlag::Negative as u8 > 0);
         cpu.accumulator = result as u8;
@@ -631,8 +1914,7 @@ fn lsr(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
 }
 
 /// NOP: No operation
-fn nop(_cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {
-}
+fn nop(_cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mode_value: AddressModeValue) {}
 
 /// ORA: The accumulator is set to the result of a inclusive or operation applied to the accumulator and a memory value
 fn ora(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
@@ -768,7 +2050,10 @@ fn sbc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
         }
         cpu.set_flag(StatusFlag::Zero, result as u8 == 0);
         // Set the Overflow flag if a signed overflow has occurred
-        cpu.set_flag(StatusFlag::Overflow, (!(cpu.accumulator ^ value) & (cpu.accumulator ^ result as u8) & StatusFlag::Negative as u8) > 0);
+        cpu.set_flag(
+            StatusFlag::Overflow,
+            (!(cpu.accumulator ^ value) & (cpu.accumulator ^ result as u8) & StatusFlag::Negative as u8) > 0,
+        );
         // Negative flag is in bit 7, so it can be used to test if the result is negative, because a negative value will also have a 1 in bit 7
         cpu.set_flag(StatusFlag::Negative, result as u8 & StatusFlag::Negative as u8 > 0);
         cpu.accumulator = result as u8;
@@ -896,7 +2181,7 @@ fn compare(cpu: &mut MOS6502, bus: &mut dyn Interface6502, register: u8, address
         cpu.set_flag(StatusFlag::Zero, register == value);
         let register = register.wrapping_sub(value);
         cpu.set_flag(StatusFlag::Negative, register & StatusFlag::Negative as u8 > 0);
-        return  register;
+        return register;
     } else {
         panic!("Compare opcode called with invalid address mode!")
     }
@@ -909,9 +2194,9 @@ mod test {
     #![allow(unused_variables, unused_mut)] //Allow some warnings for test code
 
     use super::*;
-    use crate::{StatusFlag, MOS6502};
     use crate::address_modes::AddressModeValue;
     use crate::test_utilities::StubInterface6502;
+    use crate::{StatusFlag, MOS6502};
 
     #[test]
     fn test_adc() {
@@ -933,7 +2218,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -966,7 +2252,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1000,7 +2287,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1037,7 +2325,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1073,7 +2362,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1108,7 +2398,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1152,7 +2443,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1185,7 +2477,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1219,7 +2512,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x4f << 1);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -1248,7 +2542,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1286,7 +2581,8 @@ mod test {
                 0x01fc => assert_eq!(data, 0x01),
                 0x01fb => assert_eq!(data, 0x81 | StatusFlag::Break as u8),
                 _ => panic!("Unintended Address Accessed {:4X}", address),
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1384,7 +2680,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -1413,7 +2710,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -1444,7 +2742,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -1474,7 +2773,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -1504,7 +2804,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x00);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -1534,7 +2835,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0xff);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -1562,7 +2864,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1593,7 +2896,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1624,7 +2928,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1655,7 +2960,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1687,7 +2993,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1720,7 +3027,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1753,7 +3061,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x00);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -1783,7 +3092,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x80);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -1811,7 +3121,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1842,7 +3153,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1873,7 +3185,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1904,7 +3217,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1935,7 +3249,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -1967,7 +3282,8 @@ mod test {
                 0x01fd => assert_eq!(data, 0x00),
                 0x01fc => assert_eq!(data, 0xba),
                 _ => panic!("Unintended Address Accessed: 0x{:X}", address),
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -1996,7 +3312,8 @@ mod test {
             read: |address, read_count| 0xff,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2025,7 +3342,8 @@ mod test {
             read: |address, read_count| 0x00,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2054,7 +3372,8 @@ mod test {
             read: |address, read_count| 0xff,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2083,7 +3402,8 @@ mod test {
             read: |address, read_count| 0x00,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2112,7 +3432,8 @@ mod test {
             read: |address, read_count| 0xff,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2141,7 +3462,8 @@ mod test {
             read: |address, read_count| 0x00,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2174,7 +3496,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0xff >> 1);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -2203,7 +3526,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2237,7 +3561,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2270,7 +3595,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2302,7 +3628,8 @@ mod test {
             write: |address, data, write_count| match address {
                 0x01fd => assert_eq!(data, 0x10),
                 _ => panic!("Unintended Address Accessed: 0x{:X}", address),
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -2334,7 +3661,8 @@ mod test {
             write: |address, data, write_count| match address {
                 0x01fd => assert_eq!(data, StatusFlag::Break as u8),
                 _ => panic!("Unintended Address Accessed: 0x{:X}", address),
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2367,7 +3695,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -2401,7 +3730,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -2436,7 +3766,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x83);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -2466,7 +3797,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2502,7 +3834,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x81);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -2532,7 +3865,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2568,7 +3902,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -2603,7 +3938,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -2633,7 +3969,8 @@ mod test {
             read: |address, read_count| 0x08,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -2662,7 +3999,8 @@ mod test {
             read: |address, read_count| 0x02,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2692,7 +4030,8 @@ mod test {
             read: |address, read_count| 0x10,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2722,7 +4061,8 @@ mod test {
             read: |address, read_count| 0x11,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2755,7 +4095,8 @@ mod test {
             read: |address, read_count| 0x06,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -2786,7 +4127,8 @@ mod test {
             read: |address, read_count| 0x18,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2819,7 +4161,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x01);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -2848,7 +4191,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x01);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -2877,7 +4221,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x01);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -2905,7 +4250,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2937,7 +4283,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -2969,7 +4316,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -3001,7 +4349,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -3033,7 +4382,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -3064,7 +4414,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {

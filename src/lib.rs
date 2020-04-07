@@ -73,8 +73,8 @@
 
 #![allow(clippy::needless_return)] // My preferred style
 
-mod opcodes;
 mod address_modes;
+mod opcodes;
 #[cfg(test)]
 mod test_utilities;
 
@@ -215,16 +215,17 @@ impl MOS6502 {
                 self.program_counter += 1;
                 let address_mode_value = instruction.find_address(self, interface);
 
-                trace!("0x{:04X} {} {:?} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} CYC:{}",
-                        log_program_counter,
-                        instruction.get_name(),
-                        address_mode_value,
-                        self.accumulator,
-                        self.x_register,
-                        self.y_register,
-                        self.status_register,
-                        self.stack_pointer,
-                        self.total_cycles + 7,
+                trace!(
+                    "0x{:04X} {} {:?} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} CYC:{}",
+                    log_program_counter,
+                    instruction.get_name(),
+                    address_mode_value,
+                    self.accumulator,
+                    self.x_register,
+                    self.y_register,
+                    self.status_register,
+                    self.stack_pointer,
+                    self.total_cycles + 7,
                 );
 
                 instruction.execute_instruction(self, interface, address_mode_value);
