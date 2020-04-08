@@ -1,6 +1,6 @@
 [package]
 name = "emulator_6502"
-version = "0.2.0"
+version = "1.0.0"
 authors = ["Garett Cooper"]
 edition = "2018"
 description = "Rust implementation of an MOS 6502 emulator, intended to be a talking point during the interview process for my Winter 2020 co-op placement."
