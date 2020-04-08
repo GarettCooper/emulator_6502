@@ -62,7 +62,7 @@ fn bench_test() {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("Loop Bench", |b| b.iter(|| bench_test()));
+    c.bench_function("Loop Bench", |b| b.iter(bench_test));
 }
 
 criterion_group!(benches, criterion_benchmark);
