@@ -1,9 +1,8 @@
-///ILLEGAL OPCODES----------------------------------------------------------------------------------
-/// This module contains all functions for the illegal opcodes that are not defined by official sources
-use crate::{Interface6502, MOS6502};
-//use super::super::StatusFlag; //Commented for later when these are implemented
-use crate::address_modes::{AddressModeValue};
+//! ### ILLEGAL OPCODES
+//! This module contains all functions for the illegal opcodes that are not defined by official sources
 use super::*;
+use crate::address_modes::AddressModeValue;
+use crate::MOS6502;
 
 /// SLO: Combines the ASl and ORA opcodes
 pub(super) fn slo(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
@@ -118,7 +117,10 @@ pub(super) fn arr(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_v
         if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
             let value = bus.read(address);
             let result = cpu.accumulator.wrapping_add(value);
-            cpu.set_flag(StatusFlag::Overflow, (!(cpu.accumulator ^ value) & (cpu.accumulator ^ result) & StatusFlag::Negative as u8) > 0);
+            cpu.set_flag(
+                StatusFlag::Overflow,
+                (!(cpu.accumulator ^ value) & (cpu.accumulator ^ result) & StatusFlag::Negative as u8) > 0,
+            );
         } else {
             panic!("ARR opcode called with invalid address mode!")
         }
@@ -153,7 +155,7 @@ pub(super) fn axs(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_v
 pub(super) fn ahx(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if cfg!(feature = "illegal_opcodes") {
         if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
-            bus.write(address,cpu.accumulator & cpu.x_register & (address >> 8) as u8);
+            bus.write(address, cpu.accumulator & cpu.x_register & (address >> 8) as u8);
         } else {
             panic!("AHX opcode called with invalid address mode!")
         }
@@ -166,7 +168,7 @@ pub(super) fn ahx(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_v
 pub(super) fn shy(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if cfg!(feature = "illegal_opcodes") {
         if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
-            bus.write(address,cpu.y_register & (address >> 8) as u8);
+            bus.write(address, cpu.y_register & (address >> 8) as u8);
         } else {
             panic!("SHY opcode called with invalid address mode!")
         }
@@ -175,12 +177,11 @@ pub(super) fn shy(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_v
     }
 }
 
-
 /// SHX: Sets the addressed value to the high byte of the address AND X
 pub(super) fn shx(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: AddressModeValue) {
     if cfg!(feature = "illegal_opcodes") {
         if let AddressModeValue::AbsoluteAddress(address) = address_mode_value {
-            bus.write(address,cpu.x_register & (address >> 8) as u8);
+            bus.write(address, cpu.x_register & (address >> 8) as u8);
         } else {
             panic!("SHX opcode called with invalid address mode!")
         }
@@ -229,14 +230,15 @@ pub(super) fn kil(_cpu: &mut MOS6502, _bus: &mut dyn Interface6502, _address_mod
 
 #[cfg(all(test, feature = "illegal_opcodes"))]
 mod test {
-    #![allow(unused_variables, unused_mut)] //Allow some warnings for test code
+    #![allow(unused_variables, unused_mut)] // Allow some warnings for test code
 
-    use crate::{Interface6502, MOS6502, StubInterface6502};
-    use crate::address_modes::AddressModeValue;
     use super::*;
+    use crate::address_modes::AddressModeValue;
+    use crate::test_utilities::StubInterface6502;
+    use crate::MOS6502;
 
     #[test]
-    fn test_slo(){
+    fn test_slo() {
         let mut cpu_initial = MOS6502 {
             accumulator: 0x01,
             ..Default::default()
@@ -251,9 +253,13 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x4f << 1);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
-        let mut cpu_expected = MOS6502 {  accumulator: 0x9f, ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 {
+            accumulator: 0x9f,
+            ..cpu_initial.clone()
+        };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
         slo(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -277,7 +283,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x80 << 1);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -309,10 +316,14 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x83);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { accumulator: 0x02, ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 {
+            accumulator: 0x02,
+            ..cpu_initial.clone()
+        };
         cpu_expected.set_flag(StatusFlag::Carry, false);
 
         rla(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -336,7 +347,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0xd0 << 1);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -366,8 +378,9 @@ mod test {
             },
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
-                assert_eq!(data,0x80 >> 1);
-            }, ..Default::default()
+                assert_eq!(data, 0x80 >> 1);
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -397,7 +410,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0xff >> 1);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -428,7 +442,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x90);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -459,7 +474,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x01);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -490,7 +506,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x01);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -523,7 +540,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x09);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -554,7 +572,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x01);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -587,7 +606,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x06);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -617,7 +637,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x01);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -639,7 +660,8 @@ mod test {
             read: |address, read_count| 0xff,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -665,7 +687,8 @@ mod test {
             read: |address, read_count| 0x00,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -695,7 +718,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0xff);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -722,7 +746,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x10);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
@@ -749,7 +774,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x08);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -778,7 +804,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x02);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -808,7 +835,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x10);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -838,7 +866,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x11);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -871,7 +900,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x06);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let cpu_expected = MOS6502 {
@@ -907,7 +937,8 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(address, 0x00ff);
                 assert_eq!(data, 0x18);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -935,7 +966,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -963,7 +995,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -990,7 +1023,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1019,7 +1053,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1046,7 +1081,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1074,7 +1110,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1104,7 +1141,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1133,7 +1171,8 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
         let mut cpu_expected = MOS6502 {
@@ -1162,10 +1201,14 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 {x_register: 0x00, ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 {
+            x_register: 0x00,
+            ..cpu_initial.clone()
+        };
         cpu_expected.set_flag(StatusFlag::Zero, true);
         cpu_expected.set_flag(StatusFlag::Carry, true);
 
@@ -1188,10 +1231,14 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 {x_register: 0xff, ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 {
+            x_register: 0xff,
+            ..cpu_initial.clone()
+        };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
         axs(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -1214,10 +1261,11 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(0x01ff, address);
                 assert_eq!(0x01, data);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 {..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
 
         ahx(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x01ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -1238,10 +1286,11 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(0x01ff, address);
                 assert_eq!(0x01, data);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 {..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
 
         shx(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x01ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -1262,10 +1311,11 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(0x05ff, address);
                 assert_eq!(0x01, data);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 {..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
 
         shy(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x5ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -1287,10 +1337,14 @@ mod test {
             write: |address, data, write_count| {
                 assert_eq!(0x01ff, address);
                 assert_eq!(0x01, data);
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 {stack_pointer: 0x11,..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 {
+            stack_pointer: 0x11,
+            ..cpu_initial.clone()
+        };
 
         tas(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x01ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -1312,10 +1366,16 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 {accumulator: 0x00, x_register: 0x00, stack_pointer: 0x00,..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 {
+            accumulator: 0x00,
+            x_register: 0x00,
+            stack_pointer: 0x00,
+            ..cpu_initial.clone()
+        };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
         las(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x01ff));
@@ -1336,10 +1396,16 @@ mod test {
             },
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
-            }, ..Default::default()
+            },
+            ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 {accumulator: 0x80, x_register: 0x80, stack_pointer: 0x80,..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 {
+            accumulator: 0x80,
+            x_register: 0x80,
+            stack_pointer: 0x80,
+            ..cpu_initial.clone()
+        };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
         las(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x01ff));

@@ -1,6 +1,6 @@
 [package]
 name = "emulator_6502"
-version = "0.2.0"
+version = "1.0.0"
 authors = ["Garett Cooper"]
 edition = "2018"
 description = "Rust implementation of an MOS 6502 emulator, intended to be a talking point during the interview process for my Winter 2020 co-op placement."
@@ -11,9 +11,6 @@ keywords = ["emulator", "6502", "nes"]
 categories = ["emulators"]
 license = "MIT"
 
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 log = "0.4.8"
 
@@ -21,3 +18,13 @@ log = "0.4.8"
 default = []
 illegal_opcodes = []
 binary_coded_decimal = []
+
+[badges]
+travis-ci = { repository = "GarettCooper/emulator_6502" }
+
+[dev-dependencies]
+criterion = "0.3.1"
+
+[[bench]]
+name = "benches"
+harness = false

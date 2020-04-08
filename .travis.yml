@@ -1,7 +1,10 @@
 language: rust
+before_script:
+  - rustup component add clippy
 script:
+  - cargo clippy --all-targets --all-features -- -D warnings
   - cargo test --verbose
-  - cargo test --verbose --features illegal_opcodes, binary_coded_decimal
+  - cargo test --verbose --all-features
 matrix:
   include:
     - rust: stable

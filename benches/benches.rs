@@ -3,6 +3,7 @@ use std::env::var;
 use std::fs::*;
 use std::io::*;
 use std::path::PathBuf;
+use criterion::{criterion_group, criterion_main, Criterion};
 
 struct BasicRam {
     ram: Box<[u8; u16::max_value() as usize + 1]>,
@@ -47,23 +48,22 @@ fn load_test(ram: &mut BasicRam, file_name: &str) -> Result<()> {
     Ok(())
 }
 
-#[test]
-fn loop_test() -> Result<()> {
+fn bench_test() {
     let mut ram = BasicRam {
         ram: Box::new([0; u16::max_value() as usize + 1]),
         complete: false,
     };
-    load_test(&mut ram, "6502_loop_test.bin")?;
+    load_test(&mut ram, "6502_bench.bin").unwrap();
 
     let mut cpu = MOS6502::new_start(0x400);
-    let mut cycle_timeout = 0;
     while !ram.complete {
         cpu.cycle(&mut ram);
-        cycle_timeout += 1;
-        assert!(cycle_timeout < 5000) //Timeout
     }
-
-    assert_eq!(ram.ram[0], 100);
-
-    Ok(())
 }
+
+fn criterion_benchmark(c: &mut Criterion) {
+    c.bench_function("Loop Bench", |b| b.iter(bench_test));
+}
+
+criterion_group!(benches, criterion_benchmark);
+criterion_main!(benches);
