@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/GarettCooper/emulator_6502.svg?branch=master)](https://travis-ci.org/GarettCooper/emulator_6502)
+[![Crate](https://img.shields.io/crates/v/emulator_6502.svg)](https://crates.io/crates/emulator_6502)
+[![Documentation](https://docs.rs/emulator_6502/badge.svg)](https://docs.rs/emulator_6502)
 
 # emulator_6502
 
@@ -86,5 +88,7 @@ remaining number of cycles, meaning that timing of reads and writes is only accu
 
 If illegal opcodes are called without the "illegal_opcodes" compilation feature enabled, the emulator will log a warning
 and run for the appropriate number of cycles without changing state.
+
+Current version: 0.2.0
 
 License: MIT
