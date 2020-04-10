@@ -10,6 +10,7 @@ readme = "README.md"
 keywords = ["emulator", "6502", "nes"]
 categories = ["emulators"]
 license = "MIT"
+exclude= [".travis.yml", "matrix_scraper.py"]
 
 [dependencies]
 log = "0.4.8"
