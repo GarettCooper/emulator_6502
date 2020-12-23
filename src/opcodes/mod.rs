@@ -2224,7 +2224,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x1a,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Carry, false);
 
@@ -2258,7 +2258,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
         cpu_expected.set_flag(StatusFlag::Carry, true);
@@ -2293,7 +2293,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x80,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Overflow, true);
         cpu_expected.set_flag(StatusFlag::Negative, true);
@@ -2331,7 +2331,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x19,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Carry, false);
 
@@ -2368,7 +2368,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -2404,7 +2404,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x81,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
         cpu_expected.set_flag(StatusFlag::Overflow, true);
@@ -2449,7 +2449,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x80,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -2483,7 +2483,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -2516,7 +2516,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
         asl(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -2548,7 +2548,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Carry, true);
         cpu_expected.set_flag(StatusFlag::Zero, true);
@@ -2588,7 +2588,7 @@ mod test {
         let mut cpu_expected = MOS6502 {
             program_counter: 0x8001,
             stack_pointer: 0xfa,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Break, true);
         cpu_expected.set_flag(StatusFlag::InterruptDisable, true);
@@ -2614,7 +2614,7 @@ mod test {
         let mut cpu_expected = MOS6502 {
             program_counter: 0x0100,
             remaining_cycles: 2,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         branch(&mut cpu_initial, true, AddressModeValue::RelativeAddress(0x05));
@@ -2636,7 +2636,7 @@ mod test {
         let mut cpu_expected = MOS6502 {
             program_counter: 0x0005,
             remaining_cycles: 1,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         branch(&mut cpu_initial, true, AddressModeValue::RelativeAddress(0xfb));
@@ -2655,7 +2655,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
 
         branch(&mut cpu_initial, false, AddressModeValue::RelativeAddress(0xfb));
         assert_eq!(cpu_initial, cpu_expected);
@@ -2684,7 +2684,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
         bit(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -2714,7 +2714,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Zero, true);
         cpu_expected.set_flag(StatusFlag::Negative, true);
         cpu_expected.set_flag(StatusFlag::Overflow, true);
@@ -2746,7 +2746,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Zero, true);
         cpu_expected.set_flag(StatusFlag::Carry, true);
 
@@ -2777,7 +2777,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
         compare(&mut cpu_initial, &mut stub_bus, 0x0f, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -2808,7 +2808,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
         dec(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -2839,7 +2839,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
         dec(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -2870,7 +2870,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             x_register: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -2902,7 +2902,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             x_register: 0xff,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -2934,7 +2934,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             y_register: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -2966,7 +2966,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             y_register: 0xff,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -2999,7 +2999,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x90,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -3033,7 +3033,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -3065,7 +3065,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
         inc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -3096,7 +3096,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
         inc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -3127,7 +3127,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             x_register: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -3159,7 +3159,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             x_register: 0x80,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -3191,7 +3191,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             y_register: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -3223,7 +3223,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             y_register: 0x80,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -3255,7 +3255,7 @@ mod test {
 
         let cpu_expected = MOS6502 {
             program_counter: 0x00ff,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         jmp(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -3289,7 +3289,7 @@ mod test {
         let cpu_expected = MOS6502 {
             program_counter: 0x00ff,
             stack_pointer: 0xfb,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         jsr(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -3318,7 +3318,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0xff,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -3348,7 +3348,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -3378,7 +3378,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             x_register: 0xff,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -3408,7 +3408,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             x_register: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -3438,7 +3438,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             y_register: 0xff,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -3468,7 +3468,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             y_register: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -3500,7 +3500,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Carry, true);
 
         lsr(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -3532,7 +3532,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
         cpu_expected.set_flag(StatusFlag::Carry, true);
@@ -3567,7 +3567,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x90,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -3601,7 +3601,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -3634,7 +3634,7 @@ mod test {
 
         let cpu_expected = MOS6502 {
             stack_pointer: 0xfc,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         pha(&mut cpu_initial, &mut stub_bus, AddressModeValue::Implied);
@@ -3667,7 +3667,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             stack_pointer: 0xfc,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         //cpu_expected.set_flag(StatusFlag::Break, true);
 
@@ -3703,7 +3703,7 @@ mod test {
             accumulator: 0xff,
             stack_pointer: 0xfd,
             status_register: 0x80,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         pla(&mut cpu_initial, &mut stub_bus, AddressModeValue::Implied);
@@ -3737,7 +3737,7 @@ mod test {
         let cpu_expected = MOS6502 {
             status_register: 0xa1,
             stack_pointer: 0xfd,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         plp(&mut cpu_initial, &mut stub_bus, AddressModeValue::Implied);
@@ -3770,7 +3770,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Negative, true);
         cpu_expected.set_flag(StatusFlag::Carry, false);
 
@@ -3803,7 +3803,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
         cpu_expected.set_flag(StatusFlag::Carry, true);
@@ -3838,7 +3838,7 @@ mod test {
             ..Default::default()
         };
 
-        let mut cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let mut cpu_expected = MOS6502 { ..cpu_initial };
         cpu_expected.set_flag(StatusFlag::Negative, true);
         cpu_expected.set_flag(StatusFlag::Carry, false);
 
@@ -3871,7 +3871,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
         cpu_expected.set_flag(StatusFlag::Carry, true);
@@ -3910,7 +3910,7 @@ mod test {
             program_counter: 0x4001,
             status_register: 0xe1,
             stack_pointer: 0xfd,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         rti(&mut cpu_initial, &mut stub_bus, AddressModeValue::Implied);
@@ -3945,7 +3945,7 @@ mod test {
         let cpu_expected = MOS6502 {
             program_counter: 0x1001,
             stack_pointer: 0xfd,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         rts(&mut cpu_initial, &mut stub_bus, AddressModeValue::Implied);
@@ -3975,7 +3975,7 @@ mod test {
 
         let cpu_expected = MOS6502 {
             accumulator: 0x08,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         sbc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -4005,7 +4005,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x7f,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Overflow, true);
 
@@ -4036,7 +4036,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -4067,7 +4067,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0xff,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Carry, false);
         cpu_expected.set_flag(StatusFlag::Negative, true);
@@ -4101,7 +4101,7 @@ mod test {
 
         let cpu_expected = MOS6502 {
             accumulator: 0x06,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         sbc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
@@ -4133,7 +4133,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x94,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Carry, false);
         cpu_expected.set_flag(StatusFlag::Negative, true);
@@ -4165,7 +4165,7 @@ mod test {
             ..Default::default()
         };
 
-        let cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let cpu_expected = MOS6502 { ..cpu_initial };
 
         sta(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
 
@@ -4195,7 +4195,7 @@ mod test {
             ..Default::default()
         };
 
-        let cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let cpu_expected = MOS6502 { ..cpu_initial };
 
         stx(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
 
@@ -4225,7 +4225,7 @@ mod test {
             ..Default::default()
         };
 
-        let cpu_expected = MOS6502 { ..cpu_initial.clone() };
+        let cpu_expected = MOS6502 { ..cpu_initial };
 
         sty(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
 
@@ -4256,7 +4256,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             x_register: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -4289,7 +4289,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             y_register: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Zero, true);
 
@@ -4322,7 +4322,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             x_register: 0xfd,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -4355,7 +4355,7 @@ mod test {
 
         let mut cpu_expected = MOS6502 {
             accumulator: 0x80,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
         cpu_expected.set_flag(StatusFlag::Negative, true);
 
@@ -4388,7 +4388,7 @@ mod test {
 
         let cpu_expected = MOS6502 {
             stack_pointer: 0x00,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         txs(&mut cpu_initial, &mut stub_bus, AddressModeValue::Implied);
@@ -4420,7 +4420,7 @@ mod test {
 
         let cpu_expected = MOS6502 {
             accumulator: 0x01,
-            ..cpu_initial.clone()
+            ..cpu_initial
         };
 
         tya(&mut cpu_initial, &mut stub_bus, AddressModeValue::Implied);
