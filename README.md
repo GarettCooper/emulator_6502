@@ -14,7 +14,8 @@ This is a general purpose Rust implementation of an [MOS 6502](https://en.wikipe
 emulator, capable of executing code in isolation or as part of one of the many systems the 6502
 was used in, including the Commodore 64, Apple II, and Nintendo Entertainment System. To do so,
 the library provides the Interface6502 trait which allows the client to implement its own
-functions for reading and writing to memory addresses.
+functions for reading and writing to memory addresses. For a real implementation example, check
+out my [gc_nes_emulator](https://github.com/GarettCooper/gc_nes_emulator).
 
 #### Defining an interface
 
