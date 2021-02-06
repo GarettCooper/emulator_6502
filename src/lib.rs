@@ -201,6 +201,66 @@ impl MOS6502 {
         self.program_counter = program_counter
     }
 
+    /// Returns the value of the program counter register
+    pub fn get_program_counter(&self) -> u16 {
+        self.program_counter
+    }
+
+    /// Returns the value of the accumulator register
+    pub fn get_accumulator(&self) -> u8 {
+        self.accumulator
+    }
+
+    /// Sets the value of the accumulator register
+    pub fn set_accumulator(&mut self, value: u8) {
+        self.accumulator = value
+    }
+
+    /// Returns the value of the X register
+    pub fn get_x_register(&self) -> u8 {
+        self.x_register
+    }
+
+    /// Returns the value of the X register
+    pub fn set_x_register(&mut self, value: u8) {
+        self.x_register = value
+    }
+
+    /// Returns the value of the Y register
+    pub fn get_y_register(&self) -> u8 {
+        self.y_register
+    }
+
+    /// Returns the value of the Y register
+    pub fn set_y_register(&mut self, value: u8) {
+        self.y_register = value
+    }
+
+    /// Returns the value of the stack pointer register
+    pub fn get_stack_pointer(&self) -> u8 {
+        self.stack_pointer
+    }
+
+    /// Sets the value of the stack pointer register
+    pub fn set_stack_pointer(&mut self, value: u8) {
+        self.stack_pointer = value
+    }
+
+    /// Returns the value of the status register
+    pub fn get_status_register(&self) -> u8 {
+        self.status_register
+    }
+
+    /// Sets the value of the status register
+    pub fn set_status_register(&mut self, value: u8) {
+        self.status_register = value
+    }
+
+    /// Returns the number of remaining cycles for currenly running instruction
+    pub fn get_remaining_cycles(&self) -> u8 {
+        self.remaining_cycles
+    }
+
     /// Runs a processor cycle, mutably borrows the reading and writing interface for the duration
     pub fn cycle(&mut self, interface: &mut (dyn Interface6502)) {
         if self.remaining_cycles == 0 {
