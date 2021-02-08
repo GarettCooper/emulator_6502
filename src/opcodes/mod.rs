@@ -1590,11 +1590,11 @@ fn adc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
         //Only run if the CPU is not built in NES mode
         //TODO: Make sure cpu is removed as dead code in nes builds
         if cfg!(feature = "binary_coded_decimal") && cpu.get_flag(StatusFlag::Decimal) {
-            let mut al = (cpu.accumulator & 0xf) + (value & 0xf) + cpu.get_flag(StatusFlag::Carry) as u8;
-            if al >= 0xa {
-                al = ((al + 0x6) & 0xf) + 0x10;
+            let mut sum = (cpu.accumulator & 0xf) + (value & 0xf) + cpu.get_flag(StatusFlag::Carry) as u8;
+            if sum >= 0xa {
+                sum = ((sum + 0x6) & 0xf) + 0x10;
             }
-            let mut sum = (cpu.accumulator & 0xf0) as u16 + (value & 0xf0) as u16 + al as u16;
+            let mut sum = (cpu.accumulator & 0xf0) as u16 + (value & 0xf0) as u16 + sum as u16;
             cpu.set_flag(StatusFlag::Zero, result & 0xff == 0);
             cpu.set_flag(StatusFlag::Negative, (sum & 0x80) > 0);
             cpu.set_flag(
@@ -1615,9 +1615,9 @@ fn adc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
                 StatusFlag::Overflow,
                 (!(cpu.accumulator ^ value) & (cpu.accumulator ^ result as u8) & StatusFlag::Negative as u8) > 0,
             );
+            // Negative flag is in bit 7, so it can be used to test if the result is negative, because a negative value will also have a 1 in bit 7
             cpu.set_flag(StatusFlag::Negative, result as u8 & StatusFlag::Negative as u8 > 0);
         }
-        //Negative flag is in bit 7, so it can be used to test if the result is negative, because a negative value will also have a 1 in bit 7
         cpu.accumulator = result as u8;
     } else {
         panic!("ADC opcode called with invalid address mode!")
@@ -1631,7 +1631,7 @@ fn and(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
         let value = bus.read(address);
         cpu.accumulator &= value;
         cpu.set_flag(StatusFlag::Zero, cpu.accumulator == 0);
-        //Negative flag is in bit 7, so it can be used to test if the result is negative, because a negative value will also have a 1 in bit 7
+        // Negative flag is in bit 7, so it can be used to test if the result is negative, because a negative value will also have a 1 in bit 7
         cpu.set_flag(StatusFlag::Negative, cpu.accumulator & StatusFlag::Negative as u8 > 0);
     } else {
         panic!("AND opcode called with invalid address mode!")
@@ -2050,16 +2050,15 @@ fn sbc(cpu: &mut MOS6502, bus: &mut dyn Interface6502, address_mode_value: Addre
         if cfg!(feature = "binary_coded_decimal") && cpu.get_flag(StatusFlag::Decimal) {
             let value = value as i16;
 
-            let mut al= (cpu.accumulator & 0xf) as i16 - (value & 0xf) + carry as i16 - 1;
-            if al < 0 {
-                al = ((al - 0x6) & 0xf) - 0x10;
+            let mut sum = (cpu.accumulator & 0xf) as i16 - (value & 0xf) + carry as i16 - 1;
+            if sum < 0 {
+                sum = ((sum - 0x6) & 0xf) - 0x10;
             }
-            let mut sum = (cpu.accumulator & 0xf0) as i16 - (value & 0xf0) + al;
+            let mut sum = (cpu.accumulator & 0xf0) as i16 - (value & 0xf0) + sum;
             if sum < 0 {
                 sum -= 0x60;
             }
             result = (sum & 0xff) as u16;
-
         }
         cpu.accumulator = result as u8;
     } else {
@@ -2386,11 +2385,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_1() {
-        const input: (u8, u8, bool) = (0x00, 0x00, false);
-        const expected: (u8, bool, bool, bool, bool) = (0x00, false, false, true, false);
+        const INPUT: (u8, u8, bool) = (0x00, 0x00, false);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x00, false, false, true, false);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -2399,10 +2398,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -2410,13 +2409,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         adc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -2425,11 +2424,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_2() {
-        const input: (u8, u8, bool) = (0x79, 0x00, true);
-        const expected: (u8, bool, bool, bool, bool) = (0x80, true, true, false, false);
+        const INPUT: (u8, u8, bool) = (0x79, 0x00, true);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x80, true, true, false, false);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -2438,10 +2437,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -2449,13 +2448,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         adc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -2464,11 +2463,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_3() {
-        const input: (u8, u8, bool) = (0x24, 0x56, false);
-        const expected: (u8, bool, bool, bool, bool) = (0x80, true, true, false, false);
+        const INPUT: (u8, u8, bool) = (0x24, 0x56, false);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x80, true, true, false, false);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -2477,10 +2476,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -2488,13 +2487,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         adc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -2503,11 +2502,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_4() {
-        const input: (u8, u8, bool) = (0x93, 0x82, false);
-        const expected: (u8, bool, bool, bool, bool) = (0x75, false, true, false, true);
+        const INPUT: (u8, u8, bool) = (0x93, 0x82, false);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x75, false, true, false, true);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -2516,10 +2515,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -2527,13 +2526,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         adc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -2542,11 +2541,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_5() {
-        const input: (u8, u8, bool) = (0x89, 0x76, false);
-        const expected: (u8, bool, bool, bool, bool) = (0x65, false, false, false, true);
+        const INPUT: (u8, u8, bool) = (0x89, 0x76, false);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x65, false, false, false, true);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -2555,10 +2554,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -2566,13 +2565,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         adc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -2581,11 +2580,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_6() {
-        const input: (u8, u8, bool) = (0x89, 0x76, true);
-        const expected: (u8, bool, bool, bool, bool) = (0x66, false, false, true, true);
+        const INPUT: (u8, u8, bool) = (0x89, 0x76, true);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x66, false, false, true, true);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -2594,10 +2593,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -2605,13 +2604,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         adc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -2620,11 +2619,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_7() {
-        const input: (u8, u8, bool) = (0x80, 0xf0, false);
-        const expected: (u8, bool, bool, bool, bool) = (0xd0, false, true, false, true);
+        const INPUT: (u8, u8, bool) = (0x80, 0xf0, false);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0xd0, false, true, false, true);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -2633,10 +2632,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -2644,13 +2643,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         adc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -2659,11 +2658,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_8() {
-        const input: (u8, u8, bool) = (0x80, 0xfa, false);
-        const expected: (u8, bool, bool, bool, bool) = (0xe0, true, false, false, true);
+        const INPUT: (u8, u8, bool) = (0x80, 0xfa, false);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0xe0, true, false, false, true);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -2672,10 +2671,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -2683,13 +2682,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         adc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -2698,11 +2697,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_9() {
-        const input: (u8, u8, bool) = (0x2f, 0x4f, false);
-        const expected: (u8, bool, bool, bool, bool) = (0x74, false, false, false, false);
+        const INPUT: (u8, u8, bool) = (0x2f, 0x4f, false);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x74, false, false, false, false);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -2711,10 +2710,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -2722,13 +2721,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         adc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -2737,11 +2736,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_adc_decimal_10() {
-        const input: (u8, u8, bool) = (0x6f, 0x00, true);
-        const expected: (u8, bool, bool, bool, bool) = (0x76, false, false, false, false);
+        const INPUT: (u8, u8, bool) = (0x6f, 0x00, true);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x76, false, false, false, false);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -2750,10 +2749,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -2761,13 +2760,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         adc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -4541,11 +4540,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_sbc_decimal_1() {
-        const input: (u8, u8, bool) = (0x00, 0x00, false);
-        const expected: (u8, bool, bool, bool, bool) = (0x99, true, false, false, false);
+        const INPUT: (u8, u8, bool) = (0x00, 0x00, false);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x99, true, false, false, false);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -4554,10 +4553,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -4565,13 +4564,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         sbc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -4580,11 +4579,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_sbc_decimal_2() {
-        const input: (u8, u8, bool) = (0x00, 0x00, true);
-        const expected: (u8, bool, bool, bool, bool) = (0x00, false, false, true, true);
+        const INPUT: (u8, u8, bool) = (0x00, 0x00, true);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x00, false, false, true, true);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -4593,10 +4592,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -4604,13 +4603,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         sbc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -4619,11 +4618,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_sbc_decimal_3() {
-        const input: (u8, u8, bool) = (0x00, 0x01, true);
-        const expected: (u8, bool, bool, bool, bool) = (0x99, true, false, false, false);
+        const INPUT: (u8, u8, bool) = (0x00, 0x01, true);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x99, true, false, false, false);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -4632,10 +4631,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -4643,13 +4642,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         sbc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -4658,11 +4657,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_sbc_decimal_4() {
-        const input: (u8, u8, bool) = (0x0a, 0x00, true);
-        const expected: (u8, bool, bool, bool, bool) = (0x0a, false, false, false, true);
+        const INPUT: (u8, u8, bool) = (0x0a, 0x00, true);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x0a, false, false, false, true);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -4671,10 +4670,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -4682,13 +4681,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         sbc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -4697,11 +4696,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_sbc_decimal_5() {
-        const input: (u8, u8, bool) = (0x0b, 0x00, false);
-        const expected: (u8, bool, bool, bool, bool) = (0x0a, false, false, false, true);
+        const INPUT: (u8, u8, bool) = (0x0b, 0x00, false);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x0a, false, false, false, true);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -4710,10 +4709,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -4721,13 +4720,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         sbc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -4736,11 +4735,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_sbc_decimal_6() {
-        const input: (u8, u8, bool) = (0x9a, 0x00, true);
-        const expected: (u8, bool, bool, bool, bool) = (0x9a, true, false, false, true);
+        const INPUT: (u8, u8, bool) = (0x9a, 0x00, true);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x9a, true, false, false, true);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -4749,10 +4748,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -4760,13 +4759,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         sbc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
@@ -4775,11 +4774,11 @@ mod test {
     #[test]
     #[cfg(feature = "binary_coded_decimal")]
     fn test_sbc_decimal_7() {
-        const input: (u8, u8, bool) = (0x9b, 0x00, false);
-        const expected: (u8, bool, bool, bool, bool) = (0x9a, true, false, false, true);
+        const INPUT: (u8, u8, bool) = (0x9b, 0x00, false);
+        const EXPECTED: (u8, bool, bool, bool, bool) = (0x9a, true, false, false, true);
 
         let mut cpu_initial = MOS6502 {
-            accumulator: input.0,
+            accumulator: INPUT.0,
             x_register: 0x00,
             y_register: 0x00,
             program_counter: 0x0000,
@@ -4788,10 +4787,10 @@ mod test {
             ..Default::default()
         };
         cpu_initial.set_flag(StatusFlag::Decimal, true);
-        cpu_initial.set_flag(StatusFlag::Carry, input.2);
+        cpu_initial.set_flag(StatusFlag::Carry, INPUT.2);
 
         let mut stub_bus = StubInterface6502 {
-            read: |address, read_count| input.1,
+            read: |address, read_count| INPUT.1,
             write: |address, data, write_count| {
                 panic! {"Write function was called"}
             },
@@ -4799,13 +4798,13 @@ mod test {
         };
 
         let mut cpu_expected = MOS6502 {
-            accumulator: expected.0,
-            ..cpu_initial.clone()
+            accumulator: EXPECTED.0,
+            ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Negative, expected.1);
-        cpu_expected.set_flag(StatusFlag::Overflow, expected.2);
-        cpu_expected.set_flag(StatusFlag::Zero, expected.3);
-        cpu_expected.set_flag(StatusFlag::Carry, expected.4);
+        cpu_expected.set_flag(StatusFlag::Negative, EXPECTED.1);
+        cpu_expected.set_flag(StatusFlag::Overflow, EXPECTED.2);
+        cpu_expected.set_flag(StatusFlag::Zero, EXPECTED.3);
+        cpu_expected.set_flag(StatusFlag::Carry, EXPECTED.4);
 
         sbc(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
         assert_eq!(cpu_initial, cpu_expected);
