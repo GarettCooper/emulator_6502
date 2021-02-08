@@ -1,0 +1,8 @@
+* text eol=lf
+
+*.rs text
+*.py text
+*.md text
+*.asm text
+*.toml text
+*.yaml text
