@@ -1,9 +1,9 @@
+use criterion::{criterion_group, criterion_main, Criterion};
 use emulator_6502::*;
 use std::env::var;
 use std::fs::*;
 use std::io::*;
 use std::path::PathBuf;
-use criterion::{criterion_group, criterion_main, Criterion};
 
 struct BasicRam {
     ram: Box<[u8; u16::max_value() as usize + 1]>,

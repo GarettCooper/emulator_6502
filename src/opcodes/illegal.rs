@@ -580,8 +580,9 @@ mod test {
             accumulator: 0x00,
             ..cpu_initial
         };
-        cpu_expected.set_flag(StatusFlag::Zero, true);
+        cpu_expected.set_flag(StatusFlag::Zero, false);
         cpu_expected.set_flag(StatusFlag::Carry, true);
+        cpu_expected.set_flag(StatusFlag::Negative, true);
 
         rra(&mut cpu_initial, &mut stub_bus, AddressModeValue::AbsoluteAddress(0x00ff));
 
