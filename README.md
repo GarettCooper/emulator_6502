@@ -90,6 +90,6 @@ remaining number of cycles, meaning that timing of reads and writes is only accu
 If illegal opcodes are called without the "illegal_opcodes" compilation feature enabled, the emulator will log a warning
 and run for the appropriate number of cycles without changing state.
 
-Current version: 1.0.0
+Current version: 1.1.0
 
 License: MIT

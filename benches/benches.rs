@@ -1,9 +1,9 @@
+use criterion::{criterion_group, criterion_main, Criterion};
 use emulator_6502::*;
 use std::env::var;
 use std::fs::*;
 use std::io::*;
 use std::path::PathBuf;
-use criterion::{criterion_group, criterion_main, Criterion};
 
 struct BasicRam {
     ram: Box<[u8; u16::max_value() as usize + 1]>,
@@ -33,7 +33,7 @@ impl Interface6502 for BasicRam {
 }
 
 /// Function for loading test programs
-fn load_test(ram: &mut BasicRam, file_name: &str) -> Result<()> {
+fn load_test(ram: &mut BasicRam, file_name: &str, location: usize) -> Result<()> {
     let root_dir = &var("CARGO_MANIFEST_DIR").expect("$CARGO_MANIFEST_DIR");
     let mut source_path = PathBuf::from(root_dir);
     source_path.push("tests/bins");
@@ -43,7 +43,7 @@ fn load_test(ram: &mut BasicRam, file_name: &str) -> Result<()> {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
 
-    ram.load_program(0x0400, &mut buffer);
+    ram.load_program(location, &mut buffer);
 
     Ok(())
 }
@@ -53,7 +53,7 @@ fn bench_test() {
         ram: Box::new([0; u16::max_value() as usize + 1]),
         complete: false,
     };
-    load_test(&mut ram, "6502_bench.bin").unwrap();
+    load_test(&mut ram, "6502_bench.bin", 0x400).unwrap();
 
     let mut cpu = MOS6502::new_start(0x400);
     while !ram.complete {
@@ -61,8 +61,33 @@ fn bench_test() {
     }
 }
 
+#[cfg(feature = "binary_coded_decimal")]
+fn bcd_bench() -> Result<()> {
+    std::env::set_var("RUST_LOG", "trace");
+    let mut ram = BasicRam {
+        ram: Box::new([0; u16::max_value() as usize + 1]),
+        complete: false,
+    };
+    load_test(&mut ram, "6502_decimal_test.bin", 0x200)?;
+
+    let mut cpu = MOS6502::new_start(0x200);
+    let mut cycle_timeout = 0;
+    while !ram.complete {
+        cpu.cycle(&mut ram);
+        cycle_timeout += 1;
+        assert!(cycle_timeout < 46089520) //Timeout
+    }
+    assert_eq!(ram.ram[0x0b], 0);
+    Ok(())
+}
+
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("Loop Bench", |b| b.iter(bench_test));
+    if cfg!(feature = "binary_coded_decimal") {
+        let mut group = c.benchmark_group("Binary Coded Decimal");
+        group.sample_size(10);
+        group.bench_function("BCD Bench", |b| b.iter(bcd_bench));
+    }
 }
 
 criterion_group!(benches, criterion_benchmark);

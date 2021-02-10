@@ -32,7 +32,7 @@ impl Interface6502 for BasicRam {
 }
 
 /// Function for loading test programs
-fn load_test(ram: &mut BasicRam, file_name: &str) -> Result<()> {
+fn load_test(ram: &mut BasicRam, file_name: &str, location: usize) -> Result<()> {
     let root_dir = &var("CARGO_MANIFEST_DIR").expect("$CARGO_MANIFEST_DIR");
     let mut source_path = PathBuf::from(root_dir);
     source_path.push("tests/bins");
@@ -42,18 +42,19 @@ fn load_test(ram: &mut BasicRam, file_name: &str) -> Result<()> {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
 
-    ram.load_program(0x0400, &mut buffer);
+    ram.load_program(location, &mut buffer);
 
     Ok(())
 }
 
 #[test]
 fn loop_test() -> Result<()> {
+    std::env::set_var("RUST_LOG", "error");
     let mut ram = BasicRam {
         ram: Box::new([0; u16::max_value() as usize + 1]),
         complete: false,
     };
-    load_test(&mut ram, "6502_loop_test.bin")?;
+    load_test(&mut ram, "6502_loop_test.bin", 0x400)?;
 
     let mut cpu = MOS6502::new_start(0x400);
     let mut cycle_timeout = 0;
@@ -65,5 +66,26 @@ fn loop_test() -> Result<()> {
 
     assert_eq!(ram.ram[0], 100);
 
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "binary_coded_decimal")]
+fn bcd_test() -> Result<()> {
+    std::env::set_var("RUST_LOG", "trace");
+    let mut ram = BasicRam {
+        ram: Box::new([0; u16::max_value() as usize + 1]),
+        complete: false,
+    };
+    load_test(&mut ram, "6502_decimal_test.bin", 0x200)?;
+
+    let mut cpu = MOS6502::new_start(0x200);
+    let mut cycle_timeout = 0;
+    while !ram.complete {
+        cpu.cycle(&mut ram);
+        cycle_timeout += 1;
+        assert!(cycle_timeout < 46089520) //Timeout
+    }
+    assert_eq!(ram.ram[0x0b], 0);
     Ok(())
 }

@@ -1,6 +1,6 @@
 [package]
 name = "emulator_6502"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Garett Cooper"]
 edition = "2018"
 description = "Rust implementation of an MOS 6502 emulator, intended to be a talking point during the interview process for my Winter 2020 co-op placement."
@@ -13,12 +13,13 @@ license = "MIT"
 exclude= [".travis.yml", "matrix_scraper.py"]
 
 [dependencies]
-log = "0.4.8"
+log = "0.4.*"
 
 [features]
 default = []
 illegal_opcodes = []
 binary_coded_decimal = []
+implementation_transparency = []
 
 [badges]
 travis-ci = { repository = "GarettCooper/emulator_6502" }
