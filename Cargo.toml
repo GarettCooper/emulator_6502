@@ -19,6 +19,7 @@ log = "0.4.8"
 default = []
 illegal_opcodes = []
 binary_coded_decimal = []
+implementation_transparency = []
 
 [badges]
 travis-ci = { repository = "GarettCooper/emulator_6502" }
