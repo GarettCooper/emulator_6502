@@ -391,6 +391,11 @@ impl MOS6502 {
         self.status_register = 0x34;
         self.remaining_cycles = 8;
     }
+
+    /// Returns the total number of cycles executed. Not affected by the reset method.
+    pub fn get_total_cycles(&self) -> u64 {
+        self.total_cycles
+    }
 }
 
 /// Wrapper function for reading 16 bits at a time
