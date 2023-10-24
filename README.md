@@ -27,7 +27,7 @@ struct BasicRam{
 
 impl BasicRam {
     fn load_program(&mut self, start: usize, data: &mut Vec<u8>){
-        self.ram[start..].clone_from_slice(data);
+        self.ram[start..(start + data.len())].clone_from_slice(data);
     }
 }
 

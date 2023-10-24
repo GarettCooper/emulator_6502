@@ -59,7 +59,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0x2
     Instruction {
         name: "slo",
@@ -155,7 +155,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0x12
     Instruction {
         name: "slo",
@@ -251,7 +251,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0x22
     Instruction {
         name: "rla",
@@ -347,7 +347,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0x32
     Instruction {
         name: "rla",
@@ -443,7 +443,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0x42
     Instruction {
         name: "sre",
@@ -539,7 +539,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0x52
     Instruction {
         name: "sre",
@@ -635,7 +635,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0x62
     Instruction {
         name: "rra",
@@ -731,7 +731,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0x72
     Instruction {
         name: "rra",
@@ -923,7 +923,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0x92
     Instruction {
         name: "ahx",
@@ -1115,7 +1115,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0xb2
     Instruction {
         name: "lax",
@@ -1307,7 +1307,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0xd2
     Instruction {
         name: "dcp",
@@ -1499,7 +1499,7 @@ pub(super) static OPCODE_TABLE: [Instruction; 256] = [
         name: "kil",
         function: kil,
         address_mode: implied,
-        cycles: 0,
+        cycles: 2,
     }, //0xf2
     Instruction {
         name: "isc",
